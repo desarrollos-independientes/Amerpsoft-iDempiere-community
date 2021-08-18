@@ -55,14 +55,22 @@ public class AMRRebuildValidCombinations {
 	BigDecimal UpdateC_ValidCombination=BigDecimal.ZERO;
 	BigDecimal ErrorC_ValidCombination=BigDecimal.ZERO;
 	
+	//Add TrxName By Argenis Rodríguez
+	private String trxName;
+	//End By Argenis Rodríguez
+	
 	//IProcessUI processMonitor = Env.getProcessUI(getCtx());
 	//processMonitor.statusUpdate(MessagetoShow);
+	
+	public void setTrxName(String trxName) {
+		this.trxName = trxName;
+	}
 	
 	public boolean dupC_ValidCombination () throws Exception
 	{
 		ProcessInfo srv = m_pi;
 		m_info = new StringBuffer();
-		VC_Count = getValidCombinationRecs(getAD_Client_ID(), SourceAcctSchema_ID);
+		VC_Count = getValidCombinationRecs(getAD_Client_ID(), SourceAcctSchema_ID, trxName);
 		// Reset record Count for I Insert U Update E Error
 		resetCounters();
 		// ProductNo
@@ -80,7 +88,7 @@ public class AMRRebuildValidCombinations {
 
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
@@ -94,7 +102,7 @@ public class AMRRebuildValidCombinations {
 					VCNo=1;
 				}
 				//
-				MAccount vcsource = new MAccount(Env.getCtx(),C_ValidCombination_ID,null );
+				MAccount vcsource = new MAccount(Env.getCtx(), C_ValidCombination_ID, trxName);
 				// CREATE C_ValidCombination records
 				MAccount vctarget = getFirstVCcombination(Env.getCtx(),rs.getInt(3),TargetAcctSchema_ID, rs.getInt(5), combination);
 				if (vctarget== null) {
@@ -160,7 +168,7 @@ public class AMRRebuildValidCombinations {
 		String Symbol="";
 		String Description ="";
 		// Currencies
-		MCurrency tCurr = new MCurrency(Env.getCtx(), targetAS.getC_Currency_ID(), null);
+		MCurrency tCurr = new MCurrency(Env.getCtx(), targetAS.getC_Currency_ID(), trxName);
 		setTargetCurr(tCurr);
 		if (targetCurr.getCurSymbol()!= null) {
 			Symbol=targetCurr.getCurSymbol();
@@ -208,7 +216,7 @@ public class AMRRebuildValidCombinations {
 		// Verify if combination already exist with TargetAcctSchema_ID
 		if (targetAcct==null) {
 			// Create 
-			targetAcct = new MAccount(Env.getCtx(), 0, null);
+			targetAcct = new MAccount(Env.getCtx(), 0, trxName);
 			setInsertC_ValidCombination(InsertC_ValidCombination.add(BigDecimal.ONE));
 		} else {
 			setUpdateC_ValidCombination(UpdateC_ValidCombination.add(BigDecimal.ONE));
@@ -230,7 +238,7 @@ public class AMRRebuildValidCombinations {
 		targetAcct.setUser2_ID(User2_ID);
 		targetAcct.setUserElement1_ID(UserElement1_ID);
 		targetAcct.setUserElement2_ID(UserElement2_ID);
-		MElementValue melv = new MElementValue(Env.getCtx(),Account_ID,null);
+		MElementValue melv = new MElementValue(Env.getCtx(),Account_ID,trxName);
 		Description= melv.getValue()+" "+melv.getName();
 		// Alias
 		if (sourceAcct.getAlias()!=null) {
@@ -252,8 +260,8 @@ public class AMRRebuildValidCombinations {
 	 * @param AD_Client_ID
 	 * @return
 	 */
-	@SuppressWarnings("null")
-	public static int getValidCombinationRecs (int AD_Client_ID, int TargetAcctSchema_ID )
+	public static int getValidCombinationRecs (int AD_Client_ID, int TargetAcctSchema_ID
+			, String trxName)
 	{
 		//
 		Integer noVCRecords = 0;
@@ -265,7 +273,7 @@ public class AMRRebuildValidCombinations {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			if (rs.next ())
 			{
@@ -282,9 +290,6 @@ public class AMRRebuildValidCombinations {
 			rs = null; pstmt = null;
 		}
 		//
-		if ( noVCRecords == null ) {
-			noVCRecords = 0;
-		}
 		//log.warning("noVCRecords:"+noVCRecords);
 		return noVCRecords;
 	}	//	getValidCombinationRecs
@@ -316,7 +321,7 @@ public class AMRRebuildValidCombinations {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			if (rs.next ())
 			{
@@ -333,7 +338,7 @@ public class AMRRebuildValidCombinations {
 			rs = null; pstmt = null;
 		}
 		if (C_ValidCombination_ID > 0)
-			retValue = new MAccount(Env.getCtx(),C_ValidCombination_ID,null);
+			retValue = new MAccount(Env.getCtx(), C_ValidCombination_ID, trxName);
 		//log.warning("C_ValidCombination_ID="+C_ValidCombination_ID+"  MAccount="+retValue);	
 		return retValue;
 	}	//	get

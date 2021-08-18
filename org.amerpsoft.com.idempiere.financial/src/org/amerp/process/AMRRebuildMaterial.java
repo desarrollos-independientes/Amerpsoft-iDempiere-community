@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -26,12 +27,9 @@ import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClient;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCost;
-import org.compiere.model.MCostElement;
 import org.compiere.model.MCurrency;
-import org.compiere.model.MOrg;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
-import org.compiere.model.MProductCategoryAcct;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
 import org.compiere.model.X_M_Product_Acct;
@@ -43,22 +41,16 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
-import org.compiere.util.Trx;
 
 public class AMRRebuildMaterial {
 
 	/**	Logger			*/
 	protected static CLogger	log = CLogger.getCLogger(AMRRebuildMaterial.class);
 	private ProcessInfo			m_pi;	// Process Info ID
-	private static Trx		m_trx = Trx.get(Trx.createTrxName("Setup"), true);
-	private Properties      m_ctx;
-	private String          m_lang;
-	private String m_trxName = null;
 	private static StringBuffer m_info = new StringBuffer();
 	//
 	private MClient			m_client;
 	private int AD_Client_ID;
-	private MOrg			m_org;
 	// Account Schemas
 	private int SourceAcctSchema_ID;
 	private MAcctSchema SourceAS;
@@ -78,7 +70,6 @@ public class AMRRebuildMaterial {
 	private int M_Product_ID = 0;
 	private int M_Product_Category_ID = 0;
 	private int M_Warehouse_ID=0;
-	private String MessagetoShow="";
 	// Product Count Vars
 	int Product_Count = 0 ;
 	int ProductNo = 0;
@@ -89,6 +80,11 @@ public class AMRRebuildMaterial {
 	int WH_Count = 0;
 	int WHNo = 0;
 	int Percent = 0;
+	
+	//Added by Argenis Rodríguez
+	private String trxName;
+	//End by Argenis Rodríguez
+	
 	// Counts
 	BigDecimal insertM_Cost=BigDecimal.ZERO;
 	BigDecimal updateM_Cost=BigDecimal.ZERO;
@@ -101,7 +97,15 @@ public class AMRRebuildMaterial {
 	BigDecimal insertM_Product_Category=BigDecimal.ZERO;
 	BigDecimal updateM_Product_Category=BigDecimal.ZERO;
 	BigDecimal errorM_Product_Category=BigDecimal.ZERO;
-
+	
+	/**
+	 * @author Argenis Rodríguez
+	 * @param trxName
+	 */
+	public void setTrxName(String trxName) {
+		this.trxName = trxName;
+	}
+	
 	/**
 	 * dupM_Product_Acct
 	 * @return
@@ -124,7 +128,7 @@ public class AMRRebuildMaterial {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
@@ -140,7 +144,7 @@ public class AMRRebuildMaterial {
 					ProductNo=1;
 				}
 				// Copy Product Accounting
-				copyM_Product_Acct(M_Product_ID, SourceAS, TargetAS);
+				copyM_Product_Acct(M_Product_ID, SourceAS, TargetAS, trxName);
 //				if(ProductNo==5)
 //					break;
 			}
@@ -182,7 +186,7 @@ public class AMRRebuildMaterial {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
@@ -196,7 +200,7 @@ public class AMRRebuildMaterial {
 					ProductCatNo=1;
 				}
 				// Copy Prodiuct Category Accounting
-				copyM_Product_Category_Acct(M_Product_Category_ID, SourceAS, TargetAS);
+				copyM_Product_Category_Acct(M_Product_Category_ID, SourceAS, TargetAS, trxName);
 //				if(ProductCatNo==5)
 //					break;
 			}
@@ -238,7 +242,7 @@ public class AMRRebuildMaterial {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
@@ -254,7 +258,7 @@ public class AMRRebuildMaterial {
 					WHNo=1;
 				}
 				// Copy Product Accounting
-				copyM_Warehouse_Acct(M_Warehouse_ID, SourceAS, TargetAS);
+				copyM_Warehouse_Acct(M_Warehouse_ID, SourceAS, TargetAS, trxName);
 //				if(ProductNo==5)
 //					break;
 			}
@@ -296,12 +300,11 @@ public class AMRRebuildMaterial {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
-				M_Product_ID = rs.getInt(1);
-//log.warning("ProductNo="+ProductNo+"  ProductValue="+rs.getString(2)+"  ProductName="+rs.getString(3));		
+				M_Product_ID = rs.getInt(1);	
 				// getTargetAcctSchema_ID()
 				// Percentage Monitor
 				ProductNo = ProductNo+1;
@@ -340,22 +343,26 @@ public class AMRRebuildMaterial {
 	 * @throws Exception
 	 */
 	
-	private static void copyM_Product_Acct(int M_Product_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyM_Product_Acct(int M_Product_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MProduct mp = new MProduct(Env.getCtx(),M_Product_ID,null);
-		X_M_Product_Acct source = getM_Product_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), M_Product_ID);
-		X_M_Product_Acct target = getM_Product_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), M_Product_ID);
+		MProduct mp = new MProduct(Env.getCtx(),M_Product_ID,trxName);
+		X_M_Product_Acct source = getM_Product_Acct(Env.getCtx(), sourceAS.getC_AcctSchema_ID()
+				, M_Product_ID, trxName);
+		X_M_Product_Acct target = getM_Product_Acct(Env.getCtx(), targetAS.getC_AcctSchema_ID()
+				, M_Product_ID, trxName);
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Standard Columns
 		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mp.getAD_Client_ID()) + ","+String.valueOf(mp.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source M_Product_ID="+source.getM_Product_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target M_Product_ID="+target.getM_Product_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(mp.getAD_Client_ID()) + ", "+String.valueOf(mp.getAD_Org_ID())
+			+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+			+ ", SysDate, " + String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
@@ -371,11 +378,14 @@ public class AMRRebuildMaterial {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					//targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx()
+							, sourceAS.getAD_Client_ID(), targetAS.getC_AcctSchema_ID()
+							, sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -404,11 +414,14 @@ public class AMRRebuildMaterial {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					//targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID()
+							, sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -430,8 +443,8 @@ public class AMRRebuildMaterial {
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "M_Product_ID")).append("=").append(mp.getValue());
 			if (target == null)
@@ -443,47 +456,45 @@ public class AMRRebuildMaterial {
 
 	}	//	copyM_Product_Category_Acct
 	
-	/**
-	 * copyM_Product_Category_Acct
-	 * @param M_Product_Category_ID
-	 * @param sourceAS
-	 * @param targetAS
-	 * @throws Exception
-	 */
-	private static void copyM_Product_Category_Acct2(int M_Product_Category_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
-	{
-		
-	}
-
-	private static void copyM_Product_Category_Acct(int M_Product_Category_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyM_Product_Category_Acct(int M_Product_Category_ID
+			, MAcctSchema sourceAS, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no=0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MProductCategory mpc = new MProductCategory(Env.getCtx(),M_Product_Category_ID,null);
+		MProductCategory mpc = new MProductCategory(Env.getCtx(), M_Product_Category_ID, trxName);
 		String ConstingLevel ="";
 		String CostingMethod ="";
-log.warning("Source   C_AcctSchema_ID="+sourceAS.getC_AcctSchema_ID());
-log.warning("Target   C_AcctSchema_ID="+targetAS.getC_AcctSchema_ID());
-log.warning("M_Product_Category_ID="+M_Product_Category_ID);
+		
+		log.warning("Source   C_AcctSchema_ID="+sourceAS.getC_AcctSchema_ID());
+		log.warning("Target   C_AcctSchema_ID="+targetAS.getC_AcctSchema_ID());
+		log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 
-		X_M_Product_Category_Acct source = getM_Product_Category_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), M_Product_Category_ID);
+		X_M_Product_Category_Acct source = getM_Product_Category_Acct(Env.getCtx(), sourceAS.getC_AcctSchema_ID()
+				, M_Product_Category_ID, trxName);
+		
+		if (source == null)
+			return ;
+		
 		ConstingLevel =source.getCostingLevel();
 		CostingMethod =source.getCostingMethod();
-		X_M_Product_Category_Acct target = getM_Product_Category_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), M_Product_Category_ID);
+		
+		X_M_Product_Category_Acct target = getM_Product_Category_Acct(Env.getCtx(), targetAS.getC_AcctSchema_ID()
+				, M_Product_Category_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Standard Columns
 		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mpc.getAD_Client_ID()) + ","+String.valueOf(mpc.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source M_Product_Category_ID="+source.getM_Product_Category_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target M_Product_Category_ID="+target.getM_Product_Category_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(mpc.getAD_Client_ID()) + ", " + String.valueOf(mpc.getAD_Org_ID())
+			+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+			+ ", SysDate, " + String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
-		if (source == null)
-			return;
 		ArrayList<KeyNamePair> list = getMProductCategoryAcctInfo(source);
-		if (target == null) {
+		if (target == null)
+		{
 			sqlCmdI1 = new StringBuffer ("INSERT INTO M_Product_Category_Acct(");
 			sqlCmdI1.append(stdColumns).append(",M_Product_Category_ID,C_AcctSchema_ID");
 			if (ConstingLevel != null)
@@ -491,22 +502,24 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 			if (CostingMethod != null)
 				sqlCmdI1.append(", CostingMethod");
 			sqlCmdI2 = new StringBuffer (" VALUES (");
-			sqlCmdI2.append(stdValues).append(","+M_Product_Category_ID+","+targetAS.getC_AcctSchema_ID());
+			sqlCmdI2.append(stdValues).append(", "+M_Product_Category_ID+", "+targetAS.getC_AcctSchema_ID());
 			if (ConstingLevel != null)
-				sqlCmdI2.append(",'"+source.getCostingLevel()+"'");
+				sqlCmdI2.append(", '"+source.getCostingLevel()+"'");
 			if (CostingMethod != null)
-				sqlCmdI2.append(",'"+source.getCostingMethod()+"'");
+				sqlCmdI2.append(", '"+source.getCostingMethod()+"'");
 			for (int i = 0; i < list.size(); i++)
 			{
 				KeyNamePair pp = list.get(i);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -544,11 +557,14 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx()
+							, sourceAS.getAD_Client_ID(), targetAS.getC_AcctSchema_ID()
+							, sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -569,8 +585,8 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "M_Product_Category_ID")).append("=").append(mpc.getValue());
 			if (target == null)
@@ -589,14 +605,20 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 	 * @param targetAS
 	 * @throws Exception
 	 */
-	private static void copyM_Warehouse_Acct(int M_Warehouse_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyM_Warehouse_Acct(int M_Warehouse_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MWarehouse mw = new MWarehouse(Env.getCtx(),M_Warehouse_ID,null);
-		X_M_Warehouse_Acct source = getM_Warehouse_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), M_Warehouse_ID);
-		X_M_Warehouse_Acct target = getM_Warehouse_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), M_Warehouse_ID);
+		MWarehouse mw = new MWarehouse(Env.getCtx(), M_Warehouse_ID, trxName);
+		
+		X_M_Warehouse_Acct source = getM_Warehouse_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, M_Warehouse_ID, trxName);
+		
+		X_M_Warehouse_Acct target = getM_Warehouse_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, M_Warehouse_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Stansard Columns
@@ -604,16 +626,19 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 		//	Standard Values
 		String stdValues = String.valueOf(mw.getAD_Client_ID()) + ","+String.valueOf(mw.getAD_Org_ID())+ ",'Y',SysDate,"+
 				String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source M_Product_ID="+source.getM_Product_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target M_Product_ID="+target.getM_Product_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getMWarehouseAcctInfo(source);
+		
 		sqlCmdI1 = new StringBuffer ("INSERT INTO M_Warehouse_Acct(");
 		sqlCmdI1.append(stdColumns).append(",M_Warehouse_ID,C_AcctSchema_ID");
+		
 		sqlCmdI2 = new StringBuffer (" VALUES (");
 		sqlCmdI2.append(stdValues).append(","+M_Warehouse_ID+","+targetAS.getC_AcctSchema_ID());
+		
 		if (target == null) {
 			for (int i = 0; i < list.size(); i++)
 			{
@@ -621,11 +646,13 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							,targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -654,11 +681,13 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -679,8 +708,8 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "M_Warehouse_ID")).append("=").append(mw.getValue());
 			if (target == null)
@@ -774,19 +803,6 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 //		return retAccount;
 //	}	//	createAccount
 	
-	
-	/**
-	 * Return the main transaction of the current process.
-	 * @return the transaction name
-	 */
-	public static String get_TrxName()
-	{
-		if (m_trx != null)
-			return m_trx.getTrxName();
-		return null;
-	}	//	get_TrxN
-	
-	
 	/**
 	 * 	Get Acct Info list 
 	 *	@return list
@@ -868,9 +884,10 @@ log.warning("M_Product_Category_ID="+M_Product_Category_ID);
 	 * @return AMRMProductCategoryAcct (X_M_Product_Category Extends)
 	 */
 
-	public static X_M_Product_Category_Acct getM_Product_Category_Acct (Properties ctx, int C_AcctSchema_ID, int M_Product_Category_ID)
+	public static X_M_Product_Category_Acct getM_Product_Category_Acct (Properties ctx, int C_AcctSchema_ID
+			, int M_Product_Category_ID, String trxName)
 	{
-log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Product_Category_ID);
+		log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Product_Category_ID);
 		X_M_Product_Category_Acct retValue = null;
 //		final String whereClause = "C_AcctSchema_ID=? AND M_Product_Category_ID=?";
 //		retValue =  new Query(ctx,MProductCategory.Table_Name,whereClause,null)
@@ -878,10 +895,11 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 //		.firstOnly();
 //		 return retValue;
 
-		final String whereClause = "C_AcctSchema_ID="+C_AcctSchema_ID+" AND M_Product_Category_ID="+M_Product_Category_ID;
-		retValue =  new Query(ctx,X_M_Product_Category_Acct.Table_Name,whereClause,null)
-//		.setParameters(C_AcctSchema_ID,M_Product_Category_ID)
+		final String whereClause = "C_AcctSchema_ID=? AND M_Product_Category_ID=?";
+		retValue =  new Query(ctx,X_M_Product_Category_Acct.Table_Name, whereClause, trxName)
+		.setParameters(C_AcctSchema_ID,M_Product_Category_ID)
 		.firstOnly();
+		
 		 return retValue;
 
 	
@@ -896,25 +914,91 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 	 * @return AMRMProductAcct (X_M_Product Extends)
 	 */
 
-	public static X_M_Product_Acct getM_Product_Acct (Properties ctx, int C_AcctSchema_ID, int M_Product_ID)
+	public static X_M_Product_Acct getM_Product_Acct (Properties ctx, int C_AcctSchema_ID
+			, int M_Product_ID, String trxName)
 	{
 		X_M_Product_Acct retValue = null;
 		final String whereClause = "C_AcctSchema_ID=? AND M_Product_ID=?";
-		retValue =  new Query(ctx,X_M_Product_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,M_Product_ID)
+		
+		retValue = new Query(ctx, X_M_Product_Acct.Table_Name,whereClause, trxName)
+		.setParameters(C_AcctSchema_ID, M_Product_ID)
 		.firstOnly();
+		
 		return retValue;
 	}	//	get
 	
-	public static X_M_Warehouse_Acct getM_Warehouse_Acct (Properties ctx, int C_AcctSchema_ID, int M_Warehouse_ID)
+	public static X_M_Warehouse_Acct getM_Warehouse_Acct (Properties ctx, int C_AcctSchema_ID
+			, int M_Warehouse_ID, String trxName)
 	{
 		X_M_Warehouse_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND M_Warehouse_ID=?";
-		retValue =  new Query(ctx,X_M_Warehouse_Acct.Table_Name,whereClause,null)
+		retValue =  new Query(ctx, X_M_Warehouse_Acct.Table_Name, whereClause, trxName)
 		.setParameters(C_AcctSchema_ID,M_Warehouse_ID)
 		.firstOnly();
+		
 		return retValue;
 	}	//	get
+	
+	/**
+	 * @author Argenis Rodríguez
+	 * @throws Exception
+	 */
+	private void copyMCost() throws Exception {
+		
+		MAcctSchema as = MAcctSchema.get(Env.getCtx(), SourceAcctSchema_ID, null);
+		MAcctSchema asTarget = new MAcctSchema(Env.getCtx(), TargetAcctSchema_ID, trxName);
+		
+		MProduct product = new MProduct(Env.getCtx(), M_Product_ID, trxName);
+		
+		MCost[] sourceCosts = getCostByProductSchema(product, as, trxName);
+		
+		for (MCost sourceCost: sourceCosts)
+		{
+			MCost targetCost = MCost.get(product
+					, sourceCost.getM_AttributeSetInstance_ID()
+					, asTarget
+					, sourceCost.getAD_Org_ID()
+					, sourceCost.getM_CostElement_ID()
+					, trxName);
+			
+			targetCost.setCurrentCostPrice(convertAmount(sourceCost.getCurrentCostPrice()));
+			targetCost.setCurrentCostPriceLL(convertAmount(sourceCost.getCurrentCostPriceLL()));
+			targetCost.setCurrentQty(sourceCost.getCurrentQty());
+			// IF 0.00 Then 0.01
+			/*if (mctarget.getCurrentCostPrice().compareTo(BigDecimal.valueOf(0.01)) < 0
+					|| mctarget.getCurrentCostPrice().compareTo(BigDecimal.ZERO)== 0) {
+				mctarget.setCurrentCostPrice(BigDecimal.valueOf(0.01));
+				mctarget.setCumulatedAmt(mctarget.getCumulatedQty().multiply(BigDecimal.valueOf(0.01)));
+			} else {
+				mctarget.setCumulatedAmt(convertAmount(mc.getCumulatedAmt()));
+			}*/
+			targetCost.setCumulatedAmt(convertAmount(sourceCost.getCumulatedAmt()));
+			targetCost.setCumulatedQty(sourceCost.getCumulatedQty());
+			targetCost.setFutureCostPrice(convertAmount(sourceCost.getFutureCostPrice()));
+			targetCost.setFutureCostPriceLL(convertAmount(sourceCost.getFutureCostPriceLL()));
+			targetCost.setIsCostFrozen(sourceCost.isCostFrozen());
+			// LOcal MCostSave
+			targetCost.save();
+		}
+	}
+	
+	/**
+	 * @author Argenis Rodríguez
+	 * @param product
+	 * @param as
+	 * @return
+	 */
+	private static MCost[] getCostByProductSchema(MProduct product
+			, MAcctSchema as
+			, String trxName) {
+		
+		List<MCost> costs = new Query(Env.getCtx(), MCost.Table_Name, "C_AcctSchema_ID = ? AND M_Product_ID = ?", trxName)
+				.setParameters(as.get_ID(), product.get_ID())
+				.list();
+		
+		return costs.toArray(new MCost[costs.size()]);
+	}
 	
 	/** 
 	 * copyMCost
@@ -922,18 +1006,18 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 	 * @param targetAS
 	 * @throws Exception
 	 */
-	private  void copyMCost () throws Exception
+	/*private  void copyMCost () throws Exception
 	{
 		// Get Cost
-		MCostElement[] ce= MCostElement.getElements(Env.getCtx(), "Mcost");
+		MCostElement[] ce= MCostElement.getElements(Env.getCtx(), trxName);
 		// M_product
-		MProduct mprod = new MProduct(Env.getCtx(), M_Product_ID,null);
+		MProduct mprod = new MProduct(Env.getCtx(), M_Product_ID, trxName);
 		//		
+		MAcctSchema as = MAcctSchema.get (Env.getCtx(), SourceAcctSchema_ID, null);
+		MAcctSchema astarget = new MAcctSchema(Env.getCtx(), TargetAcctSchema_ID, trxName);
 		for (int i = 0; i < ce.length; i++)
 		{			
 			MCostElement cel = ce[i];
-			MAcctSchema as = MAcctSchema.get (Env.getCtx(), SourceAcctSchema_ID, null);
-			MAcctSchema astarget = MAcctSchema.get (Env.getCtx(), TargetAcctSchema_ID, null);
 			// get MCost Source
 			MCost mc = MCost.get (mprod, mprod.getM_AttributeSetInstance_ID(),
 					as, 0, cel.getM_CostElement_ID(), mprod.get_TrxName());
@@ -942,11 +1026,11 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 					astarget, 0, cel.getM_CostElement_ID(), mprod.get_TrxName());
 			// Update Values
 			//DB.getDatabase().forUpdate(mctarget, 120);
-			mctarget.setC_AcctSchema_ID(TargetAcctSchema_ID);
+			/*mctarget.setC_AcctSchema_ID(TargetAcctSchema_ID);
 			mctarget.setAD_Org_ID(mc.getAD_Org_ID());
 			mctarget.setM_Product_ID(mprod.getM_Product_ID());
 			mctarget.setM_CostElement_ID(mc.getM_CostElement_ID());
-			mctarget.setM_CostType_ID(mc.getM_CostType_ID());
+			mctarget.setM_CostType_ID(mc.getM_CostType_ID());*//*
 			// 
 			mctarget.setCurrentCostPrice(convertAmount(mc.getCurrentCostPrice()));
 			mctarget.setCurrentCostPriceLL(convertAmount(mc.getCurrentCostPriceLL()));
@@ -957,18 +1041,17 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 				mctarget.setCurrentCostPrice(BigDecimal.valueOf(0.01));
 				mctarget.setCumulatedAmt(mctarget.getCumulatedQty().multiply(BigDecimal.valueOf(0.01)));
 			} else {
-				mctarget.setCumulatedAmt(convertAmount(mc.getCumulatedAmt()));				
+				mctarget.setCumulatedAmt(convertAmount(mc.getCumulatedAmt()));
 			}
 			mctarget.setCumulatedQty(mc.getCumulatedQty());
 			mctarget.setFutureCostPrice(convertAmount(mc.getFutureCostPrice()));
 			mctarget.setFutureCostPriceLL(convertAmount(mc.getFutureCostPriceLL()));
 			mctarget.setIsCostFrozen(mc.isCostFrozen());
 			// LOcal MCostSave
-			mctarget.save();	
-//log.warning("Product="+mprod.getValue()+"  M_CostElement_ID="+mc.getM_CostElement_ID()+" cost="+mc.getCurrentCostPrice()+"  New="+mctarget.getCurrentCostPrice()+"  ConvFactorMultiply="+getConvFactorMultiply());
+			mctarget.save();
 		}
 
-	}	//	copyMCost
+	}*/	//	copyMCost
 	
 	
 //	/**
@@ -1027,10 +1110,7 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
 		}
-		//
-		if ( noProductRecords == null ) {
-			noProductRecords = 0;
-		}
+		
 		//log.warning("noMcostRecords:"+noProductRecords);
 		return noProductRecords;
 	}	//	getProductRecs
@@ -1067,10 +1147,6 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
 		}
-		//
-		if ( noWHRecords == null ) {
-			noWHRecords = 0;
-		}
 		//log.warning("noWHRecords:"+noWHRecords);
 		return noWHRecords;
 	}	//	getProductRecs
@@ -1106,10 +1182,6 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 		{
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
-		}
-		//
-		if ( noProductCatRecords == null ) {
-			noProductCatRecords = 0;
 		}
 		//log.warning("noMcostRecords:"+noProductRecords);
 		return noProductCatRecords;
@@ -1236,7 +1308,7 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 	 * @return
 	 */
 	public BigDecimal setConversionRates(Properties ctx, int SourceCurrency_ID, 
-			int TargetCurrency_ID, String trxName) {
+			int TargetCurrency_ID) {
 		BigDecimal retValue = BigDecimal.ZERO;
 		int C_Conversion_Rate_ID = 0;
 		//log.warning("C_Currency_ID="+TargetCurrency_ID+"  C_Currency_ID_TO Rate="+SourceCurrency_ID);
@@ -1248,7 +1320,7 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 		//log.warning("sql="+sql.toString());
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			if (rs.next ())
 			{
@@ -1264,7 +1336,7 @@ log.warning("C_AcctSchema_ID="+C_AcctSchema_ID+" M_Product_Category_ID="+M_Produ
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
 		}
-		MConversionRate mconvrtd = new MConversionRate(Env.getCtx(), C_Conversion_Rate_ID,null);
+		MConversionRate mconvrtd = new MConversionRate(Env.getCtx(), C_Conversion_Rate_ID, trxName);
 		retValue=mconvrtd.getMultiplyRate();
 		setConvFactorMultiply(mconvrtd.getMultiplyRate());
 		setConvFactorDivide(mconvrtd.getDivideRate());

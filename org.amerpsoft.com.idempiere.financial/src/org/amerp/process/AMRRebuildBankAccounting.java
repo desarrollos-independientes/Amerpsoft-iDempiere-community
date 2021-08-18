@@ -95,6 +95,17 @@ public class AMRRebuildBankAccounting {
 	int Project_Count = 0;
 	int ProjectNo = 0;
 	
+	//Added By Argenis Rodríguez
+	private String trxName;
+	
+	/**
+	 * @author Argenis Rodríguez
+	 * @param trxName
+	 */
+	public void setTrxName(String trxName) {
+		this.trxName = trxName;
+	}
+	
 	public boolean dupC_Charge_Acct () throws Exception
 	{
 		m_info = new StringBuffer();
@@ -110,7 +121,7 @@ public class AMRRebuildBankAccounting {
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql.toString(), null);
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
@@ -126,7 +137,7 @@ public class AMRRebuildBankAccounting {
 					ChargeNo=1;
 				}
 				// Copy Acct records
-				copyC_Charge_Acct(C_Charge_ID, SourceAS, TargetAS);
+				copyC_Charge_Acct(C_Charge_ID, SourceAS, TargetAS, trxName);
 			}
 		}
 		catch (SQLException e)
@@ -158,7 +169,7 @@ public class AMRRebuildBankAccounting {
 			ResultSet rs = null;
 			try
 			{
-				pstmt = DB.prepareStatement (sql.toString(), null);
+				pstmt = DB.prepareStatement (sql.toString(), trxName);
 				rs = pstmt.executeQuery ();
 				while (rs.next ())
 				{
@@ -174,7 +185,7 @@ public class AMRRebuildBankAccounting {
 						ChargeNo=1;
 					}
 					// Copy Acct records
-					copyC_Tax_Acct(C_Tax_ID, SourceAS, TargetAS);
+					copyC_Tax_Acct(C_Tax_ID, SourceAS, TargetAS, trxName);
 				}
 			}
 			catch (SQLException e)
@@ -206,7 +217,7 @@ public class AMRRebuildBankAccounting {
 			ResultSet rs = null;
 			try
 			{
-				pstmt = DB.prepareStatement (sql.toString(), null);
+				pstmt = DB.prepareStatement (sql.toString(), trxName);
 				rs = pstmt.executeQuery ();
 				while (rs.next ())
 				{
@@ -222,7 +233,7 @@ public class AMRRebuildBankAccounting {
 						ChargeNo=1;
 					}
 					// Copy Acct records
-					copyC_BankAccount_Acct(C_BankAccount_ID, SourceAS, TargetAS);
+					copyC_BankAccount_Acct(C_BankAccount_ID, SourceAS, TargetAS, trxName);
 				}
 			}
 			catch (SQLException e)
@@ -254,7 +265,7 @@ public class AMRRebuildBankAccounting {
 			ResultSet rs = null;
 			try
 			{
-				pstmt = DB.prepareStatement (sql.toString(), null);
+				pstmt = DB.prepareStatement (sql.toString(), trxName);
 				rs = pstmt.executeQuery ();
 				while (rs.next ())
 				{
@@ -270,7 +281,7 @@ public class AMRRebuildBankAccounting {
 						AssetNo=1;
 					}
 					// Copy Acct records
-					copyA_Asset_Acct(A_Asset_ID, SourceAS, TargetAS);
+					copyA_Asset_Acct(A_Asset_ID, SourceAS, TargetAS, trxName);
 				}
 			}
 			catch (SQLException e)
@@ -302,7 +313,7 @@ public class AMRRebuildBankAccounting {
 			ResultSet rs = null;
 			try
 			{
-				pstmt = DB.prepareStatement (sql.toString(), null);
+				pstmt = DB.prepareStatement (sql.toString(), trxName);
 				rs = pstmt.executeQuery ();
 				while (rs.next ())
 				{
@@ -318,7 +329,7 @@ public class AMRRebuildBankAccounting {
 						AssetGroupNo=1;
 					}
 					// Copy Acct records
-					copyA_Asset_Group_Acct(A_Asset_Group_ID, SourceAS, TargetAS);
+					copyA_Asset_Group_Acct(A_Asset_Group_ID, SourceAS, TargetAS, trxName);
 				}
 			}
 			catch (SQLException e)
@@ -350,7 +361,7 @@ public class AMRRebuildBankAccounting {
 			ResultSet rs = null;
 			try
 			{
-				pstmt = DB.prepareStatement (sql.toString(), null);
+				pstmt = DB.prepareStatement (sql.toString(), trxName);
 				rs = pstmt.executeQuery ();
 				while (rs.next ())
 				{
@@ -366,7 +377,7 @@ public class AMRRebuildBankAccounting {
 						ProjectNo=1;
 					}
 					// Copy Acct records
-					copyC_Project_Acct(C_Project_ID, SourceAS, TargetAS);
+					copyC_Project_Acct(C_Project_ID, SourceAS, TargetAS, trxName);
 				}
 			}
 			catch (SQLException e)
@@ -383,25 +394,33 @@ public class AMRRebuildBankAccounting {
 			return false;
 		}
 
-	private static void copyC_Charge_Acct(int C_Charge_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyC_Charge_Acct(int C_Charge_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MCharge cha = new MCharge(Env.getCtx(),C_Charge_ID,null);
-		X_C_Charge_Acct source = getC_Charge_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), C_Charge_ID);
-		X_C_Charge_Acct target = getC_Charge_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), C_Charge_ID);
+		MCharge cha = new MCharge(Env.getCtx(), C_Charge_ID, trxName);
+		
+		X_C_Charge_Acct source = getC_Charge_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, C_Charge_ID, trxName);
+		
+		X_C_Charge_Acct target = getC_Charge_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, C_Charge_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Stansard Columns
-		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
+		String stdColumns = "AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(cha.getAD_Client_ID()) + ","+String.valueOf(cha.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source C_Charge_ID="+source.getC_Charge_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target C_Charge_ID="+target.getC_Charge_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(cha.getAD_Client_ID()) + ", "+String.valueOf(cha.getAD_Org_ID())
+			+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+			+", SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getC_Charge_AcctInfo(source);
 		sqlCmdI1 = new StringBuffer ("INSERT INTO C_Charge_Acct (");
 		sqlCmdI1.append(stdColumns).append(",C_Charge_ID,C_AcctSchema_ID");
@@ -414,11 +433,13 @@ public class AMRRebuildBankAccounting {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -447,11 +468,13 @@ public class AMRRebuildBankAccounting {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					//targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -472,8 +495,8 @@ public class AMRRebuildBankAccounting {
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "C_Charge_ID")).append("=").append(cha.getName());
 			if (target == null)
@@ -485,25 +508,34 @@ public class AMRRebuildBankAccounting {
 
 	}
 
-	private static void copyC_Tax_Acct(int C_Tax_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyC_Tax_Acct(int C_Tax_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MTax tax = new MTax(Env.getCtx(),C_Tax_ID,null);
-		X_C_Tax_Acct source = getC_Tax_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), C_Tax_ID);
-		X_C_Tax_Acct target = getC_Tax_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), C_Tax_ID);
+		
+		MTax tax = new MTax(Env.getCtx(), C_Tax_ID, trxName);
+		
+		X_C_Tax_Acct source = getC_Tax_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, C_Tax_ID, trxName);
+		
+		X_C_Tax_Acct target = getC_Tax_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, C_Tax_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Stansard Columns
 		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(tax.getAD_Client_ID()) + ","+String.valueOf(tax.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source C_Tax_ID="+source.getC_Tax_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target C_Tax_ID="+target.getC_Tax_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(tax.getAD_Client_ID()) + ","+String.valueOf(tax.getAD_Org_ID())
+		+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+		+", SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getC_Tax_AcctInfo(source);
 		sqlCmdI1 = new StringBuffer ("INSERT INTO C_Tax_Acct (");
 		sqlCmdI1.append(stdColumns).append(",C_Tax_ID,C_AcctSchema_ID");
@@ -516,11 +548,13 @@ public class AMRRebuildBankAccounting {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -549,11 +583,13 @@ public class AMRRebuildBankAccounting {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -574,8 +610,8 @@ public class AMRRebuildBankAccounting {
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "C_Tax_ID")).append("=").append(tax.getName());
 			if (target == null)
@@ -586,26 +622,34 @@ public class AMRRebuildBankAccounting {
 			log.log(Level.SEVERE,"C_Tax_ID="+tax.getName()+" Default in AcctSchemaElement NOT updated");
 	}
 
-	private static void copyC_BankAccount_Acct(int C_BankAccount_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyC_BankAccount_Acct(int C_BankAccount_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MBankAccount mba = new MBankAccount(Env.getCtx(),C_BankAccount_ID,null);
-		X_C_BankAccount_Acct source = getC_BankAccount_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), C_BankAccount_ID);
-		X_C_BankAccount_Acct target = getC_BankAccount_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), C_BankAccount_ID);
+		MBankAccount mba = new MBankAccount(Env.getCtx(), C_BankAccount_ID, trxName);
+		X_C_BankAccount_Acct source = getC_BankAccount_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, C_BankAccount_ID, trxName);
+		
+		X_C_BankAccount_Acct target = getC_BankAccount_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, C_BankAccount_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Stansard Columns
-		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
+		String stdColumns = "AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mba.getAD_Client_ID()) + ","+String.valueOf(mba.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source C_BankAccount_ID="+source.getC_BankAccount_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target C_BankAccount_ID="+target.getC_BankAccount_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(mba.getAD_Client_ID()) + " ,"+String.valueOf(mba.getAD_Org_ID())
+			+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+			+", SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getC_BankAccount_AcctInfo(source);
+		
 		sqlCmdI1 = new StringBuffer ("INSERT INTO C_BankAccount_Acct (");
 		sqlCmdI1.append(stdColumns).append(",C_BankAccount_ID,C_AcctSchema_ID");
 		sqlCmdI2 = new StringBuffer (" VALUES (");
@@ -617,11 +661,13 @@ public class AMRRebuildBankAccounting {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -650,11 +696,13 @@ public class AMRRebuildBankAccounting {
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -675,8 +723,8 @@ public class AMRRebuildBankAccounting {
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "C_BankAccount_ID")).append("=").append(mba.getName());
 			if (target == null)
@@ -687,29 +735,40 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 			log.log(Level.SEVERE,"C_BankAccount_ID="+mba.getName()+" Default in AcctSchemaElement NOT updated");
 	}
 
-	private static void copyA_Asset_Acct(int A_Asset_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyA_Asset_Acct(int A_Asset_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MAsset mas = new MAsset(Env.getCtx(),A_Asset_ID,null);
-		X_A_Asset_Acct source = getA_Asset_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), A_Asset_ID);
-		X_A_Asset_Acct target = getA_Asset_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), A_Asset_ID);
+		MAsset mas = new MAsset(Env.getCtx(), A_Asset_ID, trxName);
+		
+		X_A_Asset_Acct source = getA_Asset_Acct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, A_Asset_ID, trxName);
+		
+		X_A_Asset_Acct target = getA_Asset_Acct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, A_Asset_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Standard Columns
-		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
+		String stdColumns = "AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mas.getAD_Client_ID()) + ","+String.valueOf(mas.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source C_Charge_ID="+source.getC_Charge_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target C_Charge_ID="+target.getC_Charge_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(mas.getAD_Client_ID()) + ", "+String.valueOf(mas.getAD_Org_ID())
+			+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+			+", SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getA_Asset_AcctInfo(source);
+		
 		sqlCmdI1 = new StringBuffer ("INSERT INTO A_Asset_Acct (");
 		sqlCmdI1.append(stdColumns).append(",A_Asset_ID, C_AcctSchema_ID");
-		if (target==null) {
+		
+		if (target==null)
+		{
 			A_Asset_Acct_ID = getNextID(mas.getAD_Client_ID(), "A_Asset_Acct");
 			sqlCmdI1.append(",A_Asset_Acct_ID");
 		}
@@ -742,13 +801,15 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				KeyNamePair pp = list.get(i);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
-log.warning("columnName="+columnName+"  sourceC_ValidCombination_ID="+sourceC_ValidCombination_ID);
+				log.warning("columnName="+columnName+"  sourceC_ValidCombination_ID="+sourceC_ValidCombination_ID);
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -776,13 +837,15 @@ log.warning("columnName="+columnName+"  sourceC_ValidCombination_ID="+sourceC_Va
 				KeyNamePair pp = list.get(i);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
-log.warning("columnName="+columnName+"  sourceC_ValidCombination_ID="+sourceC_ValidCombination_ID);
+				log.warning("columnName="+columnName+"  sourceC_ValidCombination_ID="+sourceC_ValidCombination_ID);
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -803,8 +866,8 @@ log.warning("columnName="+columnName+"  sourceC_ValidCombination_ID="+sourceC_Va
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "A_Asset_ID")).append("=").append(mas.getName());
 			if (target == null)
@@ -816,29 +879,41 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 
 	}
 
-	private static void copyA_Asset_Group_Acct(int A_Asset_Group_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyA_Asset_Group_Acct(int A_Asset_Group_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MAssetGroup mas = new MAssetGroup(Env.getCtx(),A_Asset_Group_ID,null);
-		X_A_Asset_Group_Acct source = getA_Asset_GroupAcct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), A_Asset_Group_ID);
-		X_A_Asset_Group_Acct target = getA_Asset_GroupAcct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), A_Asset_Group_ID);
+		MAssetGroup mas = new MAssetGroup(Env.getCtx(), A_Asset_Group_ID, trxName);
+		
+		X_A_Asset_Group_Acct source = getA_Asset_GroupAcct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, A_Asset_Group_ID, trxName);
+		
+		X_A_Asset_Group_Acct target = getA_Asset_GroupAcct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, A_Asset_Group_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Stansard Columns
 		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mas.getAD_Client_ID()) + ","+String.valueOf(mas.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source C_Charge_ID="+source.getC_Charge_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target C_Charge_ID="+target.getC_Charge_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(mas.getAD_Client_ID())
+				+ ", " + String.valueOf(mas.getAD_Org_ID()) + ", 'Y'"
+				+ ", SysDate, " + String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+				+ ", SysDate, " + String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getA_Asset_GroupAcctInfo(source);
+		
 		sqlCmdI1 = new StringBuffer ("INSERT INTO A_Asset_Group_Acct (");
 		sqlCmdI1.append(stdColumns).append(",A_Asset_Group_ID,C_AcctSchema_ID");
-		if (target==null) {
+		
+		if (target==null)
+		{
 			A_Asset_Group_Acct_ID = getNextID(mas.getAD_Client_ID(), "A_Asset_Group_Acct");
 			sqlCmdI1.append(",A_Asset_Group_Acct_ID");
 		}
@@ -849,7 +924,8 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 		sqlCmdI1.append(",UseLifeMonths_F, UseLifeYears_F");
 		sqlCmdI2 = new StringBuffer (" VALUES (");
 		sqlCmdI2.append(stdValues).append(","+A_Asset_Group_ID+","+targetAS.getC_AcctSchema_ID());
-		if (target==null) {
+		if (target==null)
+		{
 			sqlCmdI2.append(","+A_Asset_Group_Acct_ID);
 		}
 		// Additional Fields
@@ -864,11 +940,13 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -897,11 +975,13 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -922,8 +1002,8 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "A_Asset_Group_ID")).append("=").append(mas.getName());
 			if (target == null)
@@ -932,33 +1012,44 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				m_info.append("Upd, \r\n");
 		} else
 			log.log(Level.SEVERE,"A_Asset_Group="+mas.getName()+" Default in AcctSchemaElement NOT updated");
-
 	}
 
-	private static void copyC_Project_Acct(int C_Project_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyC_Project_Acct(int C_Project_ID, MAcctSchema sourceAS
+			, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MProject mpr = new MProject(Env.getCtx(),C_Project_ID,null);
-		X_C_Project_Acct source = getC_ProjectAcct(Env.getCtx(),sourceAS.getC_AcctSchema_ID(), C_Project_ID);
-		X_C_Project_Acct target = getC_ProjectAcct(Env.getCtx(),targetAS.getC_AcctSchema_ID(), C_Project_ID);
+		
+		MProject mpr = new MProject(Env.getCtx(), C_Project_ID, trxName);
+		
+		X_C_Project_Acct source = getC_ProjectAcct(Env.getCtx(),sourceAS.getC_AcctSchema_ID()
+				, C_Project_ID, trxName);
+		
+		X_C_Project_Acct target = getC_ProjectAcct(Env.getCtx(),targetAS.getC_AcctSchema_ID()
+				, C_Project_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Stansard Columns
-		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
+		String stdColumns = "AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mpr.getAD_Client_ID()) + ","+String.valueOf(mpr.getAD_Org_ID())+ ",'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
-//log.warning("Source C_Charge_ID="+source.getC_Charge_ID()+"  C_AcctSchema_ID="+source.getC_AcctSchema_ID());
-//log.warning("Target C_Charge_ID="+target.getC_Charge_ID()+"  C_AcctSchema_ID="+target.getC_AcctSchema_ID());
+		String stdValues = String.valueOf(mpr.getAD_Client_ID()) + ", " + String.valueOf(mpr.getAD_Org_ID())
+			+ ", 'Y', SysDate, " + String.valueOf(Env.getAD_User_ID(Env.getCtx()))
+			+ ", SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
+		
 		// GET Account Values Array List
 		if (source == null)
 			return;
+		
 		ArrayList<KeyNamePair> list = getC_ProjectAcctInfo(source);
+		
 		sqlCmdI1 = new StringBuffer ("INSERT INTO C_Project_Acct (");
 		sqlCmdI1.append(stdColumns).append(",C_Project_ID,C_AcctSchema_ID");
+		
 		sqlCmdI2 = new StringBuffer (" VALUES (");
 		sqlCmdI2.append(stdValues).append(","+C_Project_ID+","+targetAS.getC_AcctSchema_ID());
+		
 		if (target == null) {
 			for (int i = 0; i < list.size(); i++)
 			{
@@ -966,11 +1057,13 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -999,11 +1092,13 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
 				if (sourceC_ValidCombination_ID!= 0) {
-					sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -1024,8 +1119,8 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				sqlCmdI1.append(String.valueOf(targetAccount.getC_ValidCombination_ID()));
 			}
 		}
-//log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
-		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, null);
+		
+		no = DB.executeUpdateEx(sqlCmdI1+" "+sqlCmdI2, trxName);
 		if (no == 1) {
 			m_info.append(Msg.translate( Env.getCtx(), "C_Project_ID")).append("=").append(mpr.getName());
 			if (target == null)
@@ -1034,7 +1129,6 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 				m_info.append("Upd, \r\n");
 		} else
 			log.log(Level.SEVERE,"C_Project_ID="+mpr.getName()+" Default in AcctSchemaElement NOT updated");
-
 	}
 
 //	/**
@@ -1162,13 +1256,17 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 		return noRecords;
 	}	//	getC_ChargeRecs	
 	
-	public static X_C_Charge_Acct getC_Charge_Acct (Properties ctx, int C_AcctSchema_ID, int C_Charge_ID)
+	public static X_C_Charge_Acct getC_Charge_Acct (Properties ctx, int C_AcctSchema_ID
+			, int C_Charge_ID, String trxName)
 	{
 		X_C_Charge_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND C_Charge_ID=?";
-		retValue=new Query(ctx,X_C_Charge_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,C_Charge_ID)
-		.firstOnly();
+		
+		retValue=new Query(ctx, X_C_Charge_Acct.Table_Name, whereClause, trxName)
+			.setParameters(C_AcctSchema_ID,C_Charge_ID)
+			.firstOnly();
+		
 		return retValue;
 	}	//	getC_Charge_Acct
 	
@@ -1226,13 +1324,17 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 	}	//	getC_BankAccountRecs
 	
 
-	public static X_C_BankAccount_Acct getC_BankAccount_Acct (Properties ctx, int C_AcctSchema_ID, int C_BankAccount_ID)
+	public static X_C_BankAccount_Acct getC_BankAccount_Acct (Properties ctx, int C_AcctSchema_ID
+			, int C_BankAccount_ID, String trxName)
 	{
 		X_C_BankAccount_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND C_BankAccount_ID=?";
-		retValue=new Query(ctx,X_C_BankAccount_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,C_BankAccount_ID)
-		.firstOnly();
+		
+		retValue=new Query(ctx, X_C_BankAccount_Acct.Table_Name, whereClause, trxName)
+			.setParameters(C_AcctSchema_ID,C_BankAccount_ID)
+			.firstOnly();
+		
 		return retValue;
 	}	//	getC_BankAccount_Acct
 	
@@ -1288,13 +1390,17 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 		return noRecords;
 	}	//	getC_TaxRecs
 
-	public static X_C_Tax_Acct getC_Tax_Acct (Properties ctx, int C_AcctSchema_ID, int C_Tax_ID)
+	public static X_C_Tax_Acct getC_Tax_Acct (Properties ctx, int C_AcctSchema_ID
+			, int C_Tax_ID, String trxName)
 	{
 		X_C_Tax_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND C_Tax_ID=?";
-		retValue=new Query(ctx,X_C_Tax_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,C_Tax_ID)
-		.firstOnly();
+		
+		retValue=new Query(ctx, X_C_Tax_Acct.Table_Name, whereClause, trxName)
+			.setParameters(C_AcctSchema_ID, C_Tax_ID)
+			.firstOnly();
+		
 		return retValue;
 	}	//	getC_Tax_Acct
 	
@@ -1350,13 +1456,17 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 		return noRecords;
 	}	//	getA_AssetRecs
 
-	public static X_A_Asset_Acct getA_Asset_Acct (Properties ctx, int C_AcctSchema_ID, int A_Asset_ID)
+	public static X_A_Asset_Acct getA_Asset_Acct (Properties ctx, int C_AcctSchema_ID
+			, int A_Asset_ID, String trxName)
 	{
 		X_A_Asset_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND A_Asset_ID=?";
-		retValue=new Query(ctx,X_A_Asset_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,A_Asset_ID)
-		.firstOnly();
+		
+		retValue=new Query(ctx, X_A_Asset_Acct.Table_Name, whereClause, trxName)
+			.setParameters(C_AcctSchema_ID,A_Asset_ID)
+			.firstOnly();
+		
 		return retValue;
 	}	//	getA_Asset_Acct
 		
@@ -1413,13 +1523,17 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 		return noRecords;
 	}	//	getA_Asset_GroupRecs
 	
-	public static X_A_Asset_Group_Acct getA_Asset_GroupAcct (Properties ctx, int C_AcctSchema_ID, int A_Asset_Group_ID)
+	public static X_A_Asset_Group_Acct getA_Asset_GroupAcct (Properties ctx, int C_AcctSchema_ID
+			, int A_Asset_Group_ID, String trxName)
 	{
 		X_A_Asset_Group_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND A_Asset_Group_ID=?";
-		retValue=new Query(ctx,X_A_Asset_Group_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,A_Asset_Group_ID)
-		.firstOnly();
+		
+		retValue = new Query(ctx, X_A_Asset_Group_Acct.Table_Name, whereClause, trxName)
+			.setParameters(C_AcctSchema_ID, A_Asset_Group_ID)
+			.firstOnly();
+		
 		return retValue;
 	}	//	getA_Asset_GroupAcct
 	
@@ -1476,13 +1590,17 @@ log.warning("sql="+sqlCmdI1+" "+sqlCmdI2);
 		return noRecords;
 	}	//	getC_ProjectGroupRecs
 	
-	public static X_C_Project_Acct getC_ProjectAcct (Properties ctx, int C_AcctSchema_ID, int C_Project_ID)
+	public static X_C_Project_Acct getC_ProjectAcct (Properties ctx, int C_AcctSchema_ID
+			, int C_Project_ID, String trxName)
 	{
 		X_C_Project_Acct retValue = null;
+		
 		final String whereClause = "C_AcctSchema_ID=? AND C_Project_ID=?";
-		retValue=new Query(ctx,X_C_Project_Acct.Table_Name,whereClause,null)
-		.setParameters(C_AcctSchema_ID,C_Project_ID)
-		.firstOnly();
+		
+		retValue=new Query(ctx, X_C_Project_Acct.Table_Name, whereClause, trxName)
+			.setParameters(C_AcctSchema_ID,C_Project_ID)
+			.firstOnly();
+		
 		return retValue;
 	}	//	getC_ProjectAcct
 	

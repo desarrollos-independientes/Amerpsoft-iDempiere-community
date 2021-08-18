@@ -35,9 +35,9 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 	@Override
 	protected void prepare() {
 		// TODO Auto-generated method stub
-log.setLevel(Level.WARNING);
-//log.warning("..WARNING....Toma de Parametros.......AMFRebuildANewClientSchema............");
-//log.severe("..SEVERE.........Toma de Parametros.......AMFRebuildANewClientSchema............");
+		log.setLevel(Level.WARNING);
+		//log.warning("..WARNING....Toma de Parametros.......AMFRebuildANewClientSchema............");
+		//log.severe("..SEVERE.........Toma de Parametros.......AMFRebuildANewClientSchema............");
     	ProcessInfoParameter[] paras = getParameter();
 		for (ProcessInfoParameter para : paras)
 		{
@@ -76,15 +76,17 @@ log.setLevel(Level.WARNING);
 //		BigDecimal createdTotalRecs = BigDecimal.ZERO;
 //		BigDecimal errorTotalRecs = BigDecimal.ZERO;
 		// AMRAmerpProcessMsg.sqlGetADProcessTRL  GET PROCESS NAME
-		String  Msg_Header = AMFAmerpProcessMsg.sqlGetADProcessTRL(this.getProcessInfo().getAD_Process_ID(), Env.getAD_Language(Env.getCtx()))+"\r\n";
+		String  Msg_Header = AMFAmerpProcessMsg
+				.sqlGetADProcessTRL(this.getProcessInfo().getAD_Process_ID()
+						, Env.getAD_Language(Env.getCtx()))+"\r\n";
 		// Status UPDATE
 		this.statusUpdate(Msg_Header.trim()+": "+Msg.translate(Env.getCtx(), "Processing"));		
 		String MessagetoShow = "";
 		addLog(Msg_Header);
 		// Client and AcctSchema
-		MClient mc = new MClient(Env.getCtx(), p_AD_Client_ID, null);
+		MClient mc = new MClient(Env.getCtx(), p_AD_Client_ID, get_TrxName());
 		MClientInfo info = MClientInfo.get(Env.getCtx(), p_AD_Client_ID, null);
-		MCurrency curr = new MCurrency(Env.getCtx(), info.getC_Currency_ID(), null);
+		MCurrency curr = new MCurrency(Env.getCtx(), info.getC_Currency_ID(), get_TrxName());
 		// Client Name 
 		Msg_Header = Msg.translate(Env.getCtx(), "AD_Client_ID")+":"+mc.getName();
 		addLog(Msg_Header);
@@ -113,9 +115,9 @@ log.setLevel(Level.WARNING);
 		}
 		// Currencies
 		SourceCurrency_ID=source.getC_Currency_ID();
-		MCurrency scurr = new MCurrency(Env.getCtx(), SourceCurrency_ID, null);
+		MCurrency scurr = new MCurrency(Env.getCtx(), SourceCurrency_ID, get_TrxName());
 		TargetCurrency_ID=target.getC_Currency_ID();
-		MCurrency tcurr = new MCurrency(Env.getCtx(), TargetCurrency_ID, null);
+		MCurrency tcurr = new MCurrency(Env.getCtx(), TargetCurrency_ID, get_TrxName());
 
 		// Source Received
 		Msg_Header = Msg.translate(Env.getCtx(), "C_AcctSchema_ID")+" "+
@@ -143,6 +145,9 @@ log.setLevel(Level.WARNING);
 			// Status UPDATE
 			this.statusUpdate(X_C_ValidCombination.Table_Name +": "+Msg.translate(Env.getCtx(), "Processing"));
 			AMRRebuildValidCombinations valcomb = new AMRRebuildValidCombinations();
+			//Add Trx Name By Argenis Rodríguez
+			valcomb.setTrxName(get_TrxName());
+			//End By Argenis Rodríguez
 			// Reset Counters
 			valcomb.resetCounters();
 			// Account Schemas
@@ -175,7 +180,7 @@ log.setLevel(Level.WARNING);
 		if (p_SetupSchema.compareToIgnoreCase("Y") == 0 ) {
 			// Status UPDATE
 			this.statusUpdate(MAcctSchema.Table_Name +": "+Msg.translate(Env.getCtx(), "Processing"));
-			AMRRebuildSetup.createClientSchemaStructure(p_AD_Client_ID, p_SourceAcctSchema_ID, p_TargetAcctSchema_ID);
+			AMRRebuildSetup.createClientSchemaStructure(p_AD_Client_ID, p_SourceAcctSchema_ID, p_TargetAcctSchema_ID, get_TrxName());
 			addLog(AMRRebuildSetup.getInfo());
 			//log.warning("...createClientSchemaStructure");
 		}
@@ -188,6 +193,7 @@ log.setLevel(Level.WARNING);
 			this.statusUpdate(Msg.translate(Env.getCtx(), "M_Product_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			AMRRebuildMaterial recpro = new AMRRebuildMaterial();
 			recpro.setM_pi(getProcessInfo());  // Set Process Info
+			recpro.setTrxName(get_TrxName());
 			// Account Schemas
 			recpro.setSourceAcctSchema_ID(p_SourceAcctSchema_ID);
 			recpro.setTargetAcctSchema_ID(p_TargetAcctSchema_ID);
@@ -198,7 +204,7 @@ log.setLevel(Level.WARNING);
 			recpro.setTargetCurrency_ID(TargetCurrency_ID);
 			recpro.setSourceCurr(scurr);
 			recpro.setTargetCurr(tcurr);
-			recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID, getTrx());
+			recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID);
 			// AD_Client_ID
 			recpro.setAD_Client_ID(p_AD_Client_ID);
 			recpro.setM_client(mc);
@@ -232,6 +238,7 @@ log.setLevel(Level.WARNING);
 			// Status UPDATE
 			this.statusUpdate(Msg.translate(Env.getCtx(), "M_Product_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			AMRRebuildMaterial recpro = new AMRRebuildMaterial();
+			recpro.setTrxName(get_TrxName());
 			recpro.setM_pi(getProcessInfo());  // Set Process Info
 			// Account Schemas
 			recpro.setSourceAcctSchema_ID(p_SourceAcctSchema_ID);
@@ -243,7 +250,7 @@ log.setLevel(Level.WARNING);
 			recpro.setTargetCurrency_ID(TargetCurrency_ID);
 			recpro.setSourceCurr(scurr);
 			recpro.setTargetCurr(tcurr);
-			recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID, getTrx());
+			recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID);
 			// AD_Client_ID
 			recpro.setAD_Client_ID(p_AD_Client_ID);
 			recpro.setM_client(mc);
@@ -266,6 +273,7 @@ log.setLevel(Level.WARNING);
 		// ***********************************************************
 		if (p_BPartners.compareToIgnoreCase("Y") == 0 ) {
 			AMRRebuildBPartners recbpa = new AMRRebuildBPartners();
+			recbpa.setTrxName(get_TrxName());
 			recbpa.setM_pi(getProcessInfo());  // Set Process Info
 			// Account Schemas
 			recbpa.setSourceAcctSchema_ID(p_SourceAcctSchema_ID);
@@ -299,6 +307,7 @@ log.setLevel(Level.WARNING);
 		if (p_BankAccounting.compareToIgnoreCase("Y") == 0 ) {
 			AMRRebuildBankAccounting recbaa = new AMRRebuildBankAccounting();
 			recbaa.setM_pi(getProcessInfo());  // Set Process Info
+			recbaa.setTrxName(get_TrxName());
 			// Account Schemas
 			recbaa.setSourceAcctSchema_ID(p_SourceAcctSchema_ID);
 			recbaa.setTargetAcctSchema_ID(p_TargetAcctSchema_ID);
@@ -340,13 +349,6 @@ log.setLevel(Level.WARNING);
 		}
 		return null;
 	}
-
-	private String getTrx() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-
 }
 
 

@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -32,6 +33,8 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+
+import dev.itechsolutions.model.MITSAcctSchemaElement;
 
 /**
  * 
@@ -72,7 +75,10 @@ public class AMRRebuildSetup {
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean createClientSchemaStructure (int AD_Client_ID, int p_SourceAcctSchema_ID, int p_TargetAcctSchema_ID) throws Exception
+	public static boolean createClientSchemaStructure (int AD_Client_ID
+			, int p_SourceAcctSchema_ID
+			, int p_TargetAcctSchema_ID
+			, String trxName) throws Exception
 	{
 
 		//m_trx.start();
@@ -82,7 +88,7 @@ public class AMRRebuildSetup {
 		// Verify if Source C_AcctSchema_ID is valid
 		if (source.get_ID() == 0)
 			throw new AdempiereSystemError("NotFound Source C_AcctSchema_ID=" + p_SourceAcctSchema_ID);
-		MAcctSchema target = new MAcctSchema (Env.getCtx(), p_TargetAcctSchema_ID, get_TrxName());
+		MAcctSchema target = new MAcctSchema (Env.getCtx(), p_TargetAcctSchema_ID, trxName);
 		// Verify if target C_AcctSchema_ID is valid
 		if (target.get_ID() == 0)
 			throw new AdempiereSystemError("NotFound Target C_AcctSchema_ID=" + p_TargetAcctSchema_ID);
@@ -91,13 +97,13 @@ public class AMRRebuildSetup {
 //log.warning("p_SourceAcctSchema_ID"+p_SourceAcctSchema_ID+" p_TargetAcctSchema_ID"+p_TargetAcctSchema_ID);
 		MAcctSchemaElement[] targetElements = target.getAcctSchemaElements();
 		// Create Target AC C_AcctSchema_Element
-		copyAccSchemaElements(AD_Client_ID, source, target);
+		copyAccSchemaElements(AD_Client_ID, source, target, trxName);
 		//  
 //		if (MAcctSchemaGL.get(Env.getCtx(), p_TargetAcctSchema_ID) == null){
-			copyAccSchemaGL(source, target);
+			copyAccSchemaGL(source, target, trxName);
 //		}
 //		if (MAcctSchemaDefault.get(Env.getCtx(), p_TargetAcctSchema_ID) == null){
-			copyAccSchemaDefault(source, target);
+			copyAccSchemaDefault(source, target, trxName);
 //		}		
 		return true;
 		
@@ -134,6 +140,107 @@ public class AMRRebuildSetup {
 		return null;
 	}	//	get_TrxN
 	
+	/**
+	 * @author Argenis Rodríguez
+	 * @param AD_Client_ID
+	 * @param sourceAS
+	 * @param targetAS
+	 * @param trxName
+	 * @return
+	 * @throws Exception
+	 */
+	private static boolean copyAccSchemaElements (int AD_Client_ID
+			, MAcctSchema sourceAS
+			, MAcctSchema targetAS
+			, String trxName) throws Exception {
+		
+		MAcctSchemaElement[] elements = sourceAS.getAcctSchemaElements();
+		
+		for (MAcctSchemaElement sourceElement: elements)
+		{
+			MITSAcctSchemaElement targetElement = Optional.ofNullable(MITSAcctSchemaElement
+						.getAcctSchemaElement(targetAS, sourceElement.getElementType()))
+					.orElseGet(() -> new MITSAcctSchemaElement(targetAS));
+			
+			targetElement.setAD_Org_ID(sourceElement.getAD_Org_ID());
+			targetElement.setIsBalanced(sourceElement.isBalanced());
+			targetElement.setIsMandatory(sourceElement.isMandatory());
+			targetElement.setIsActive(sourceElement.isActive());
+			
+			if (MAcctSchemaElement.ELEMENTTYPE_Account.equals(sourceElement.getElementType()))
+				targetElement.setTypeAccount(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Element_ID()
+						, sourceElement.getC_ElementValue_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_Organization.equals(sourceElement.getElementType()))
+				targetElement.setTypeOrg(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getOrg_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_Product.equals(sourceElement.getElementType()))
+				targetElement.setTypeProduct(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getM_Product_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_BPartner.equals(sourceElement.getElementType()))
+				targetElement.setTypeBPartner(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_BPartner_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_Project.equals(sourceElement.getElementType()))
+				targetElement.setTypeProject(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Project_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_SalesRegion.equals(sourceElement.getElementType()))
+				targetElement.setTypeSalesRegion(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_SalesRegion_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_UserElementList1.equals(sourceElement.getElementType()))
+				targetElement.setElementTypeU1(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Element_ID()
+						, sourceElement.getC_ElementValue_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_UserElementList2.equals(sourceElement.getElementType()))
+				targetElement.setElementTypeU2(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Element_ID()
+						, sourceElement.getC_ElementValue_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_Activity.equals(sourceElement.getElementType()))
+				targetElement.setTypeActivity(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Activity_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_OrgTrx.equals(sourceElement.getElementType()))
+				targetElement.setTypeOrgTrx(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getOrg_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_LocationFrom.equals(sourceElement.getElementType()))
+				targetElement.setTypeLocationFrom(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Location_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_LocationTo.equals(sourceElement.getElementType()))
+				targetElement.setTypeLocationTo(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Location_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_Campaign.equals(sourceElement.getElementType()))
+				targetElement.setTypeCampaign(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getC_Campaign_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_UserColumn1.equals(sourceElement.getElementType()))
+				targetElement.setTypeUC1(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getAD_Column_ID());
+			else if (MAcctSchemaElement.ELEMENTTYPE_UserColumn2.equals(sourceElement.getElementType()))
+				targetElement.setTypeUC2(sourceElement.getSeqNo()
+						, sourceElement.getName()
+						, sourceElement.getAD_Column_ID());
+			else
+				targetElement.setElementType(sourceElement.getElementType()
+						, sourceElement.getSeqNo()
+						, sourceElement.getName());
+			
+			targetElement.saveEx();
+		}
+		
+		return true;
+	}
+	
 	
 	/**
 	 * 
@@ -142,7 +249,10 @@ public class AMRRebuildSetup {
 	 * @param targetAS
 	 * @return
 	 */
-	private static boolean copyAccSchemaElements (int AD_Client_ID, MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception {
+	/*private static boolean copyAccSchemaElements (int AD_Client_ID
+			, MAcctSchema sourceAS
+			, MAcctSchema targetAS
+			, String trxName) throws Exception {
 		//
 		m_info.append(X_C_AcctSchema_Element.Table_Name).append(": ").append("\r\n");
 		//  Standard columns
@@ -162,7 +272,7 @@ public class AMRRebuildSetup {
 		//	Standard Values
 		String stdValues = String.valueOf(AD_Client_ID) + ",0 ,'Y',SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()))+",SysDate,"+String.valueOf(Env.getAD_User_ID(Env.getCtx()));
 		// C_Element_ID First on Array
-		MElement[] mel = sqlGetC_Element_ID(Env.getCtx(), AD_Client_ID, "C_Element");
+		MElement[] mel = sqlGetC_Element_ID(Env.getCtx(), AD_Client_ID, trxName);
 		MElement meldef = mel[0];
 		MAcctSchemaElement masele = null;
 		MAcctSchemaElement tmasele = null;
@@ -174,7 +284,7 @@ public class AMRRebuildSetup {
 //log.warning("sql="+sql);
 		try
 		{
-			stmt = DB.prepareStatement(sql, m_trx.getTrxName());
+			stmt = DB.prepareStatement(sql, trxName);
 			rs = stmt.executeQuery();
 			while (rs.next())
 			{
@@ -185,7 +295,7 @@ public class AMRRebuildSetup {
 				String IsMandatory = null;
 				String IsBalanced = "N";
 				int SeqNo = 0;
-				masele = new MAcctSchemaElement(Env.getCtx(),SourceAcctSchema_Element_ID,null);
+				masele = new MAcctSchemaElement(Env.getCtx(),SourceAcctSchema_Element_ID,trxName);
 				tmasele = sqlGetM_AcctSchema_Element( targetAS,  ElementType);
 				if (tmasele == null ) {
 					isnew=true;
@@ -274,7 +384,7 @@ public class AMRRebuildSetup {
 //log.warning("ElementType="+ElementType+"  no="+no);		
 					}
 					// UPDATE C_AcctSchema_Element IF
-					/** Default value for mandatory elements: OO and AC */
+					/** Default value for mandatory elements: OO and AC *//*
 					if (ElementType.equals("OO"))
 					{
 						sqlCmd = new StringBuffer ("UPDATE C_AcctSchema_Element SET Org_ID=");
@@ -402,13 +512,15 @@ public class AMRRebuildSetup {
 	 * @param targetAS
 	 * @throws Exception
 	 */
-	private static void copyAccSchemaGL (MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyAccSchemaGL (MAcctSchema sourceAS, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		boolean targetSave = false;
 		MAcctSchemaGL source = MAcctSchemaGL.get(Env.getCtx(), sourceAS.getC_AcctSchema_ID());		
 		MAcctSchemaGL target = MAcctSchemaGL.get(Env.getCtx(), targetAS.getC_AcctSchema_ID());
 		if (target == null)
-			target = new MAcctSchemaGL(Env.getCtx(), 0, null);
+			target = new MAcctSchemaGL(Env.getCtx(), 0, trxName);
+		else
+			target.set_TrxName(trxName);
 		target.setC_AcctSchema_ID(targetAS.getC_AcctSchema_ID());
 		target.setIsActive(true);
 		target.setUseCurrencyBalancing(true);
@@ -419,11 +531,13 @@ public class AMRRebuildSetup {
 			KeyNamePair pp = list.get(i);
 			int sourceC_ValidCombination_ID = pp.getKey();
 			String columnName = pp.getName();
-			MAccount sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+			MAccount sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 //			MAccount targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 			AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+			rvc.setTrxName(trxName);
 			// CREATE C_ValidCombination records
-			MAccount targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+			MAccount targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 //log.warning("sourceAccount="+sourceAccount+ "  targetAccount="+targetAccount);
 			if (targetAccount== null) {
 				// CREATE New Valid Combination for the New Account Schema
@@ -454,12 +568,14 @@ public class AMRRebuildSetup {
 	 * @param targetAS
 	 * @throws Exception
 	 */
-	private static void copyAccSchemaDefault(MAcctSchema sourceAS, MAcctSchema targetAS) throws Exception
+	private static void copyAccSchemaDefault(MAcctSchema sourceAS, MAcctSchema targetAS, String trxName) throws Exception
 	{
 		MAcctSchemaDefault source = MAcctSchemaDefault.get(Env.getCtx(), sourceAS.getC_AcctSchema_ID());
 		MAcctSchemaDefault target = MAcctSchemaDefault.get(Env.getCtx(), targetAS.getC_AcctSchema_ID());
 		if (target == null)
-			target = new MAcctSchemaDefault(Env.getCtx(), 0, null);
+			target = new MAcctSchemaDefault(Env.getCtx(), 0, trxName);
+		else
+			target.set_TrxName(trxName);
 		target.setC_AcctSchema_ID(targetAS.getC_AcctSchema_ID());
 		ArrayList<KeyNamePair> list = source.getAcctInfo();
 		for (int i = 0; i < list.size(); i++)
@@ -467,11 +583,13 @@ public class AMRRebuildSetup {
 			KeyNamePair pp = list.get(i);
 			int sourceC_ValidCombination_ID = pp.getKey();
 			String columnName = pp.getName();
-			MAccount sourceAccount = MAccount.get(Env.getCtx(), sourceC_ValidCombination_ID);
+			MAccount sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 //			MAccount targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 			AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
+			rvc.setTrxName(trxName);
 			// CREATE C_ValidCombination records
-			MAccount targetAccount = rvc.getFirstVCcombination(Env.getCtx(),sourceAS.getAD_Client_ID(),targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
+			MAccount targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 //log.warning("sourceAccount="+sourceAccount+ "  targetAccount="+targetAccount);
 			if (targetAccount== null) {
 				// CREATE New Valid Combination for the New Account Schema
@@ -693,8 +811,8 @@ public class AMRRebuildSetup {
 	
 	{
 		final String whereClause = "AD_Client_ID=? ";
-		List<MCost> list = new Query(Env.getCtx(), "C_Element",
-				whereClause, get_TrxName()).setParameters(AD_Client_ID).list();
+		List<MElement> list = new Query(Env.getCtx(), MElement.Table_Name,
+				whereClause, trxName).setParameters(AD_Client_ID).list();
 		MElement[] retValue = new MElement[list.size()];
 		list.toArray(retValue);
 		return retValue;	
