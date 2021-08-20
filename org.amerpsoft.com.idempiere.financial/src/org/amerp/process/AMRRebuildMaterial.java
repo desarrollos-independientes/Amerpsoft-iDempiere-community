@@ -14,8 +14,10 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -25,9 +27,9 @@ import org.adempiere.exceptions.DBException;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClient;
-import org.compiere.model.MConversionRate;
 import org.compiere.model.MCost;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MInOut;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
 import org.compiere.model.MWarehouse;
@@ -41,6 +43,12 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
+
+import dev.itechsolutions.exceptions.NoCurrencyConversionException;
+import dev.itechsolutions.model.ITSMConversionRate;
+import dev.itechsolutions.util.ColumnUtils;
+import dev.itechsolutions.util.TimestampUtil;
 
 public class AMRRebuildMaterial {
 
@@ -61,11 +69,8 @@ public class AMRRebuildMaterial {
 	private int TargetCurrency_ID;
 	private MCurrency sourceCurr;
 	private MCurrency targetCurr;
-	// Target Conversion Rate
-	private int C_Conversion_Rate_ID;
 	// Conversion Factor
 	private BigDecimal convFactorMultiply;
-	private BigDecimal convFactorDivide;
 	// 
 	private int M_Product_ID = 0;
 	private int M_Product_Category_ID = 0;
@@ -84,6 +89,10 @@ public class AMRRebuildMaterial {
 	//Added by Argenis Rodríguez
 	private String trxName;
 	//End by Argenis Rodríguez
+	
+	//Added By Argenis Rodríguez
+	private StringBuilder errors = new StringBuilder();
+	//End By Argenis Rodríguez
 	
 	// Counts
 	BigDecimal insertM_Cost=BigDecimal.ZERO;
@@ -349,17 +358,20 @@ public class AMRRebuildMaterial {
 		int no = 0;
 		MAccount sourceAccount = null;
 		MAccount targetAccount = null;
-		MProduct mp = new MProduct(Env.getCtx(),M_Product_ID,trxName);
+		MProduct mp = new MProduct(Env.getCtx(), M_Product_ID, trxName);
+		
 		X_M_Product_Acct source = getM_Product_Acct(Env.getCtx(), sourceAS.getC_AcctSchema_ID()
 				, M_Product_ID, trxName);
+		
 		X_M_Product_Acct target = getM_Product_Acct(Env.getCtx(), targetAS.getC_AcctSchema_ID()
 				, M_Product_ID, trxName);
+		
 		StringBuffer  sqlCmdI1 = null;
 		StringBuffer  sqlCmdI2 = null;
 		// 	Standard Columns
 		String stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
 		//	Standard Values
-		String stdValues = String.valueOf(mp.getAD_Client_ID()) + ", "+String.valueOf(mp.getAD_Org_ID())
+		String stdValues = String.valueOf(mp.getAD_Client_ID()) + ", " + String.valueOf(mp.getAD_Org_ID())
 			+ ", 'Y', SysDate, "+String.valueOf(Env.getAD_User_ID(Env.getCtx()))
 			+ ", SysDate, " + String.valueOf(Env.getAD_User_ID(Env.getCtx()));
 		
@@ -942,6 +954,32 @@ public class AMRRebuildMaterial {
 	
 	/**
 	 * @author Argenis Rodríguez
+	 * @param M_Product_ID
+	 * @param trxName
+	 * @return
+	 */
+	private Timestamp getLastReceiptDate(int M_Product_ID, int AD_Org_ID, String trxName) {
+		
+		StringBuilder sql = new StringBuilder("SELECT ")
+					.append(ColumnUtils.COLUMNNAME_DateDoc)
+				.append(" FROM " + ColumnUtils.Table_Name_FTU_LastProductsDocuments)
+				.append(" WHERE ")
+				.append(ColumnUtils.COLUMNNAME_AD_Table_ID).append(" = ?")
+				.append(" AND ")
+				.append(ColumnUtils.COLUMNNAME_AD_Org_ID).append(" = ?")
+				.append(" AND ")
+				.append(ColumnUtils.COLUMNNAME_M_Product_ID).append(" = ?")
+				.append(" AND ")
+				.append(ColumnUtils.COLUMNNAME_IsSOTrx).append(" = 'N'");
+		
+		Timestamp retVal = DB.getSQLValueTS(trxName, sql.toString()
+				, MInOut.Table_ID, AD_Org_ID, M_Product_ID);
+		
+		return retVal;
+	}
+	
+	/**
+	 * @author Argenis Rodríguez
 	 * @throws Exception
 	 */
 	private void copyMCost() throws Exception {
@@ -962,6 +1000,28 @@ public class AMRRebuildMaterial {
 					, sourceCost.getM_CostElement_ID()
 					, trxName);
 			
+			Timestamp dateConvert = Optional.ofNullable(getLastReceiptDate(M_Product_ID, sourceCost.getAD_Org_ID(), trxName))
+					.orElse(TimestampUtil.now());
+			
+			BigDecimal rate = setConversionRates(as.getC_Currency_ID()
+					, asTarget.getC_Currency_ID()
+					, dateConvert
+					, product.getAD_Client_ID()
+					, sourceCost.getAD_Org_ID());
+			
+			if (rate == null)
+			{
+				if (!Util.isEmpty(errors.toString(), true))
+					errors.append(Env.NL);
+				
+				errors.append(Msg.parseTranslation(Env.getCtx(), NoCurrencyConversionException
+						.buildMessage(as.getC_Currency_ID(), asTarget.getC_Currency_ID()
+								, dateConvert, 0
+								, product.getAD_Client_ID(), sourceCost.getAD_Org_ID())));
+				
+				continue;
+			}
+			
 			targetCost.setCurrentCostPrice(convertAmount(sourceCost.getCurrentCostPrice()));
 			targetCost.setCurrentCostPriceLL(convertAmount(sourceCost.getCurrentCostPriceLL()));
 			targetCost.setCurrentQty(sourceCost.getCurrentQty());
@@ -981,6 +1041,10 @@ public class AMRRebuildMaterial {
 			// LOcal MCostSave
 			targetCost.save();
 		}
+	}
+	
+	public String getErrors() {
+		return errors.toString();
 	}
 	
 	/**
@@ -1300,6 +1364,27 @@ public class AMRRebuildMaterial {
 //	}
 	
 	/**
+	 * @author Argenis Rodríguez 
+	 * @param ctx
+	 * @param C_Currency_ID
+	 * @param C_CurrencyTo_ID
+	 * @param convDate
+	 * @param AD_Client_ID
+	 * @param AD_Org_ID
+	 * @return
+	 */
+	public BigDecimal setConversionRates(int C_Currency_ID, int C_CurrencyTo_ID
+			, Timestamp convDate, int AD_Client_ID, int AD_Org_ID) {
+		
+		BigDecimal rate = ITSMConversionRate.getRate(C_Currency_ID, C_CurrencyTo_ID
+				, convDate, 0, AD_Client_ID, AD_Org_ID);
+		
+		setConvFactorMultiply(rate);
+		
+		return rate;
+	}
+	
+	/**
 	 * setConversionRates
 	 * @param ctx
 	 * @param SourceCurrency_ID
@@ -1307,7 +1392,7 @@ public class AMRRebuildMaterial {
 	 * @param trxName
 	 * @return
 	 */
-	public BigDecimal setConversionRates(Properties ctx, int SourceCurrency_ID, 
+	/*public BigDecimal setConversionRates(Properties ctx, int SourceCurrency_ID, 
 			int TargetCurrency_ID) {
 		BigDecimal retValue = BigDecimal.ZERO;
 		int C_Conversion_Rate_ID = 0;
@@ -1343,7 +1428,7 @@ public class AMRRebuildMaterial {
 		setC_Conversion_Rate_ID(mconvrtd.getC_Conversion_Rate_ID());
 		//log.warning("C_Conversion_Rate_ID="+C_Conversion_Rate_ID+"  Conversion Rate="+retValue);
 		return retValue;
-	}
+	}*/
 	
 	public BigDecimal convertAmount(BigDecimal Amount) {
 		
@@ -1449,28 +1534,13 @@ public class AMRRebuildMaterial {
 	public void setConvFactorMultiply(BigDecimal convFactorMultiply) {
 		this.convFactorMultiply = convFactorMultiply;
 	}
-
-	public BigDecimal getConvFactorDivide() {
-		return convFactorDivide;
-	}
-
-	public void setConvFactorDivide(BigDecimal convFactorDivide) {
-		this.convFactorDivide = convFactorDivide;
-	}
+	
 	public int getM_Product_ID() {
 		return M_Product_ID;
 	}
 
 	public void setM_Product_ID(int m_Product_ID) {
 		M_Product_ID = m_Product_ID;
-	}
-
-	public int getC_Conversion_Rate_ID() {
-		return C_Conversion_Rate_ID;
-	}
-
-	public void setC_Conversion_Rate_ID(int c_Conversion_Rate_ID) {
-		C_Conversion_Rate_ID = c_Conversion_Rate_ID;
 	}
 
 	public void resetCounters() {

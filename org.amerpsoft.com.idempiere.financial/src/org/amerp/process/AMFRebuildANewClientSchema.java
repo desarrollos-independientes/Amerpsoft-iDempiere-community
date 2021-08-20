@@ -171,6 +171,7 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			MessagetoShow = Msg.translate(Env.getCtx(), "C_ValidCombination_ID");
 			addLog(MessagetoShow);	
 			addLog(valcomb.getInfo());
+			commitEx();
 			// ---------------------------
 			//log.warning("...dupValidCombinations");
 		}
@@ -182,6 +183,7 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			this.statusUpdate(MAcctSchema.Table_Name +": "+Msg.translate(Env.getCtx(), "Processing"));
 			AMRRebuildSetup.createClientSchemaStructure(p_AD_Client_ID, p_SourceAcctSchema_ID, p_TargetAcctSchema_ID, get_TrxName());
 			addLog(AMRRebuildSetup.getInfo());
+			commitEx();
 			//log.warning("...createClientSchemaStructure");
 		}
 		// ***********************************************************
@@ -204,7 +206,7 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			recpro.setTargetCurrency_ID(TargetCurrency_ID);
 			recpro.setSourceCurr(scurr);
 			recpro.setTargetCurr(tcurr);
-			recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID);
+			//recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID);
 			// AD_Client_ID
 			recpro.setAD_Client_ID(p_AD_Client_ID);
 			recpro.setM_client(mc);
@@ -217,16 +219,19 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "M_Product_Category_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recpro.dupM_Product_Category_Acct();
+			commitEx();
 			// ---------------------------
 			addLog(recpro.getInfo());
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "M_Product_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recpro.dupM_Product_Acct();
+			commitEx();
 			// ---------------------------
 			addLog(recpro.getInfo());
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "M_Warehouse_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recpro.dupM_Warehouse_Acct();
+			commitEx();
 			// ---------------------------
 			addLog(recpro.getInfo());
 		}
@@ -250,7 +255,7 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			recpro.setTargetCurrency_ID(TargetCurrency_ID);
 			recpro.setSourceCurr(scurr);
 			recpro.setTargetCurr(tcurr);
-			recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID);
+			//recpro.setConversionRates(Env.getCtx(), SourceCurrency_ID, TargetCurrency_ID);
 			// AD_Client_ID
 			recpro.setAD_Client_ID(p_AD_Client_ID);
 			recpro.setM_client(mc);
@@ -263,8 +268,10 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "M_Product_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recpro.dupM_Product_Cost();
+			commitEx();
 			// ---------------------------
 			addLog(recpro.getInfo());
+			addLog(recpro.getErrors());
 		}
 		// ***********************************************************
 		// BUSINESS PARTNERS
@@ -291,10 +298,12 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "C_BP_Group_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbpa.dupC_BP_Group_Acct();
+			commitEx();
 			addLog(recbpa.getInfo());
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "C_BPartner_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbpa.dupC_BPartner_Acct();
+			commitEx();
 			addLog(recbpa.getInfo());
 			// ---------------------------
 		}		
@@ -325,26 +334,32 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			this.statusUpdate(Msg.translate(Env.getCtx(), "C_Charge_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbaa.dupC_Charge_Acct();
 			addLog(recbaa.getInfo());
+			commitEx();
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "C_Tax_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbaa.dupC_Tax_Acct();
 			addLog(recbaa.getInfo());
+			commitEx();
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "C_BankAccount_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbaa.dupC_BankAccount_Acct();
 			addLog(recbaa.getInfo());
+			commitEx();
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "A_Asset_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbaa.dupA_Asset_Acct();
 			addLog(recbaa.getInfo());
+			commitEx();
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "A_Asset_Group_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbaa.dupA_Asset_Group_Acct();
 			addLog(recbaa.getInfo());
+			commitEx();
 			// ---------------------------
 			this.statusUpdate(Msg.translate(Env.getCtx(), "C_Project_ID") +": "+Msg.translate(Env.getCtx(), "Processing"));
 			recbaa.dupC_Project_Acct();
 			addLog(recbaa.getInfo());
+			commitEx();
 			// ---------------------------
 		}
 		return null;
