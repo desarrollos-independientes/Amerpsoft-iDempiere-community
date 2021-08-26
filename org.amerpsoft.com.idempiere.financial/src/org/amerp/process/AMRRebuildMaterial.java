@@ -395,7 +395,8 @@ public class AMRRebuildMaterial {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx()
 							, sourceAS.getAD_Client_ID(), targetAS.getC_AcctSchema_ID()
 							, sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
@@ -406,7 +407,7 @@ public class AMRRebuildMaterial {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -431,7 +432,8 @@ public class AMRRebuildMaterial {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID()
 							, sourceAccount.getCombination());
 					if (targetAccount== null) {
@@ -442,8 +444,7 @@ public class AMRRebuildMaterial {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
-
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -524,13 +525,14 @@ public class AMRRebuildMaterial {
 				KeyNamePair pp = list.get(i);
 				int sourceC_ValidCombination_ID = pp.getKey();
 				String columnName = pp.getName();
-				if (sourceC_ValidCombination_ID!= 0) {
+				if (sourceC_ValidCombination_ID != 0) {
 					sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
 					// targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -540,8 +542,7 @@ public class AMRRebuildMaterial {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
-
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -574,7 +575,8 @@ public class AMRRebuildMaterial {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx()
 							, sourceAS.getAD_Client_ID(), targetAS.getC_AcctSchema_ID()
 							, sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
@@ -585,7 +587,7 @@ public class AMRRebuildMaterial {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -663,7 +665,8 @@ public class AMRRebuildMaterial {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							,targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -673,7 +676,7 @@ public class AMRRebuildMaterial {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -698,7 +701,8 @@ public class AMRRebuildMaterial {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -708,7 +712,7 @@ public class AMRRebuildMaterial {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -730,7 +734,6 @@ public class AMRRebuildMaterial {
 				m_info.append("Upd, \r\n");
 		} else
 			log.log(Level.SEVERE,"warehouse="+mw.getValue()+" Default in AcctSchemaElement NOT updated");
-
 	}	//	copyM_Warehouse_Category_Acct
 
 //	/**
@@ -1039,7 +1042,7 @@ public class AMRRebuildMaterial {
 			targetCost.setFutureCostPriceLL(convertAmount(sourceCost.getFutureCostPriceLL()));
 			targetCost.setIsCostFrozen(sourceCost.isCostFrozen());
 			// LOcal MCostSave
-			targetCost.save();
+			targetCost.saveEx();
 		}
 	}
 	

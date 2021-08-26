@@ -318,7 +318,7 @@ public class AMRRebuildBankAccounting {
 				while (rs.next ())
 				{
 					A_Asset_Group_ID = rs.getInt(1);
-//	log.warning("AGName="+rs.getString(2)+"  AGDescription="+rs.getString(3));		
+					// log.warning("AGName="+rs.getString(2)+"  AGDescription="+rs.getString(3));		
 					// getTargetAcctSchema_ID()
 					// Percentage Monitor
 					AssetGroupNo = AssetGroupNo+1;
@@ -438,7 +438,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -448,7 +449,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -473,7 +474,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -483,7 +485,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -553,7 +555,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -563,7 +566,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -588,7 +591,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -598,7 +602,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -666,7 +670,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -676,7 +681,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -701,7 +706,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -711,7 +717,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -808,7 +814,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -818,7 +825,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -844,7 +851,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -854,7 +862,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -876,7 +884,6 @@ public class AMRRebuildBankAccounting {
 				m_info.append("Upd, \r\n");
 		} else
 			log.log(Level.SEVERE,"A_Asset_ID="+mas.getName()+" Default in AcctSchemaElement NOT updated");
-
 	}
 
 	private static void copyA_Asset_Group_Acct(int A_Asset_Group_ID, MAcctSchema sourceAS
@@ -945,7 +952,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -955,7 +963,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -980,7 +988,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -990,7 +999,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -1062,7 +1071,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -1072,7 +1082,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);
@@ -1097,7 +1107,8 @@ public class AMRRebuildBankAccounting {
 					AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 					rvc.setTrxName(trxName);
 					// CREATE C_ValidCombination records
-					targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
+					targetAccount = rvc.createAccount(targetAS, sourceAccount);
+					/*targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 							, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
 					if (targetAccount== null) {
 						// CREATE New Valid Combination for the New Account Schema
@@ -1107,7 +1118,7 @@ public class AMRRebuildBankAccounting {
 						// UPDATE New Valid Combination for the New Account Schema
 						// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 						targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
-					}
+					}*/
 				} else {
 					sourceAccount = MAccount.getDefault(sourceAS, false);
 					targetAccount = MAccount.getDefault(sourceAS, false);

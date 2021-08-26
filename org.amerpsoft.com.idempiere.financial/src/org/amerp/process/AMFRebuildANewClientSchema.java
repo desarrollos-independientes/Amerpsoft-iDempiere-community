@@ -4,6 +4,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
+import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MClient;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MCurrency;
@@ -11,6 +12,7 @@ import org.compiere.model.X_C_ValidCombination;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.AdempiereSystemError;
+import org.compiere.util.AdempiereUserError;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -139,6 +141,23 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 		addLog(Msg_Header);
 		
 		// ***********************************************************
+		// Account Schema Definition Tables
+		// ***********************************************************
+		if (p_SetupSchema.compareToIgnoreCase("Y") == 0 ) {
+			// Status UPDATE
+			this.statusUpdate(MAcctSchema.Table_Name +": "+Msg.translate(Env.getCtx(), "Processing"));
+			AMRRebuildSetup.createClientSchemaStructure(p_AD_Client_ID, p_SourceAcctSchema_ID, p_TargetAcctSchema_ID, get_TrxName());
+			addLog(AMRRebuildSetup.getInfo());
+			commitEx();
+			//log.warning("...createClientSchemaStructure");
+		}
+		
+		MAcctSchemaElement[] elements = target.getAcctSchemaElements();
+		
+		if (elements.length == 0)
+			throw new AdempiereUserError("NotFound Target C_AcctSchema_Element");
+		
+		// ***********************************************************
 		// Accounting: C_ValidCombination Table Class Setup
 		// ***********************************************************
 		if (p_ValidCombinations.compareToIgnoreCase("Y") == 0 ) {
@@ -174,17 +193,6 @@ public class AMFRebuildANewClientSchema extends SvrProcess{
 			commitEx();
 			// ---------------------------
 			//log.warning("...dupValidCombinations");
-		}
-		// ***********************************************************
-		// Account Schema Definition Tables
-		// ***********************************************************
-		if (p_SetupSchema.compareToIgnoreCase("Y") == 0 ) {
-			// Status UPDATE
-			this.statusUpdate(MAcctSchema.Table_Name +": "+Msg.translate(Env.getCtx(), "Processing"));
-			AMRRebuildSetup.createClientSchemaStructure(p_AD_Client_ID, p_SourceAcctSchema_ID, p_TargetAcctSchema_ID, get_TrxName());
-			addLog(AMRRebuildSetup.getInfo());
-			commitEx();
-			//log.warning("...createClientSchemaStructure");
 		}
 		// ***********************************************************
 		// MATERIAL

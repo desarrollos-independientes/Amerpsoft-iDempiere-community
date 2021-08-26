@@ -4,11 +4,10 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.exceptions.DBException;
-import org.adempiere.util.IProcessUI;
-import org.compiere.model.I_C_ValidCombination;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaElement;
@@ -17,12 +16,13 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MElementValue;
 import org.compiere.model.MOrg;
 import org.compiere.model.Query;
-import org.compiere.model.X_C_ValidCombination;
 import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+
+import dev.itechsolutions.model.MITSAccount;
 
 public class AMRRebuildValidCombinations {
 
@@ -34,7 +34,6 @@ public class AMRRebuildValidCombinations {
 	private int AD_Client_ID=0;
 	private MOrg			m_org;
 	private int AD_Org_ID=0;
-	private String m_trxName = "ValidCombination";
 	// Account Schemas
 	private int SourceAcctSchema_ID;
 	private MAcctSchema SourceAS;
@@ -43,9 +42,6 @@ public class AMRRebuildValidCombinations {
 	// Currencies
 	private MCurrency targetCurr;
 	private static StringBuffer m_info = new StringBuffer();
-	// Conversion Factor
-	private BigDecimal convFactorMultiply;
-	private BigDecimal convFactorDivide;
 	// Valid Combinations Count Vars
 	int VC_Count = 0 ;
 	int VCNo = 0;
@@ -66,7 +62,43 @@ public class AMRRebuildValidCombinations {
 		this.trxName = trxName;
 	}
 	
-	public boolean dupC_ValidCombination () throws Exception
+	/**
+	 * @author Argenis Rodríguez
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean dupC_ValidCombination() throws Exception {
+		
+		String where = "C_ValidCombination.AD_Client_ID = ?"
+				+ " AND C_ValidCombination.C_AcctSchema_ID = ?";
+		
+		List<MAccount> accounts = new Query(Env.getCtx(), MAccount.Table_Name, where, trxName)
+				.setParameters(AD_Client_ID, SourceAcctSchema_ID)
+				.setOrderBy("AD_Client_ID, C_AcctSchema_ID, Account_ID")
+				.list();
+		
+		VC_Count = accounts.size();
+		
+		for (MAccount sourceAcct: accounts)
+		{
+			VCNo += 1;
+			
+			Percent =  (VCNo * 100 /VC_Count);
+			
+			createAccount(TargetAS, sourceAcct);
+		}
+		
+		m_info.append(Msg.translate(Env.getCtx(), "C_ValidCombination_ID")+"   "+Msg.translate(Env.getCtx(), "Created")).append("\r\n");
+		m_info.append("(s) = "+getInsertC_ValidCombination()).append("\r\n");
+		m_info.append(Msg.translate(Env.getCtx(), "C_ValidCombination_ID")+"   "+Msg.translate(Env.getCtx(), "Updated")).append("\r\n");
+		m_info.append("(s) = "+getUpdateC_ValidCombination()).append("\r\n");
+		m_info.append(Msg.translate(Env.getCtx(), "C_ValidCombination_ID")+"   "+Msg.translate(Env.getCtx(), "Error")).append("\r\n");
+		m_info.append("(s) = "+getErrorC_ValidCombination()).append("\r\n");
+		
+		return true;
+	}
+	
+	/*public boolean dupC_ValidCombination () throws Exception
 	{
 		ProcessInfo srv = m_pi;
 		m_info = new StringBuffer();
@@ -138,16 +170,100 @@ public class AMRRebuildValidCombinations {
 		m_info.append("(s) = "+getErrorC_ValidCombination()).append("\r\n");
 
 		return false;
+	}*/
+	
+	
+	public MAccount createAccount(MAcctSchema targetAS, MAccount sourceAcct) {
+		
+		int AD_Client_ID = targetAS.getAD_Client_ID(); 
+		int C_AcctSchema_ID = targetAS.getC_AcctSchema_ID();
+		//
+		int AD_Org_ID = 0;
+		int Account_ID = 0;
+		int C_SubAcct_ID = 0;
+		int M_Product_ID = 0;
+		int C_BPartner_ID = 0;
+		int AD_OrgTrx_ID = 0;
+		int C_LocFrom_ID = 0;
+		int C_LocTo_ID = 0;
+		int C_SalesRegion_ID = 0; 
+		int C_Project_ID = 0;
+		int C_Campaign_ID = 0;
+		int C_Activity_ID = 0;
+		int User1_ID = 0;
+		int User2_ID = 0;
+		int UserElement1_ID = 0;
+		int UserElement2_ID = 0;
+		//
+		//  Active Elements
+		MAcctSchemaElement[] elements = targetAS.getAcctSchemaElements();
+		for (int i = 0; i < elements.length; i++)
+		{
+			MAcctSchemaElement ase = elements[i];
+			String elementType = ase.getElementType();
+			//
+			if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_Organization))
+				AD_Org_ID = sourceAcct.getAD_Org_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_Account))
+				Account_ID = sourceAcct.getAccount_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_SubAccount))
+				C_SubAcct_ID = sourceAcct.getC_SubAcct_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_BPartner))
+				C_BPartner_ID = sourceAcct.getC_BPartner_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_Product))
+				M_Product_ID = sourceAcct.getM_Product_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_Activity))
+				C_Activity_ID = sourceAcct.getC_Activity_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_LocationFrom))
+				C_LocFrom_ID = sourceAcct.getC_LocFrom_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_LocationTo))
+				C_LocTo_ID = sourceAcct.getC_LocTo_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_Campaign))
+				C_Campaign_ID = sourceAcct.getC_Campaign_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_OrgTrx))
+				AD_OrgTrx_ID = sourceAcct.getAD_OrgTrx_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_Project))
+				C_Project_ID = sourceAcct.getC_Project_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_SalesRegion))
+				C_SalesRegion_ID = sourceAcct.getC_SalesRegion_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_UserElementList1))
+				User1_ID = sourceAcct.getUser1_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_UserElementList2))
+				User2_ID = sourceAcct.getUser2_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_UserColumn1))
+				UserElement1_ID = sourceAcct.getUserElement1_ID();
+			else if (elementType.equals(MAcctSchemaElement.ELEMENTTYPE_UserColumn2))
+				UserElement2_ID = sourceAcct.getUserElement2_ID();
+			//	No UserElement
+		}
+		//
+		
+		MITSAccount targetAcct = MITSAccount.get(sourceAcct.getCtx(), AD_Client_ID, AD_Org_ID
+				, C_AcctSchema_ID, Account_ID, C_SubAcct_ID
+				, M_Product_ID, C_BPartner_ID, AD_OrgTrx_ID
+				, C_LocFrom_ID, C_LocTo_ID, C_SalesRegion_ID
+				, C_Project_ID, C_Campaign_ID, C_Activity_ID
+				, User1_ID, User2_ID, UserElement1_ID
+				, UserElement2_ID, trxName, false);
+		
+		if (targetAcct.is_new())
+		{
+			setInsertC_ValidCombination(InsertC_ValidCombination.add(BigDecimal.ONE));
+			targetAcct.saveEx();
+		}
+		else
+			setUpdateC_ValidCombination(UpdateC_ValidCombination.add(BigDecimal.ONE));
+		
+		return targetAcct;
 	}
 	
-
 	/**
 	 * 	Create Account
 	 *	@param targetAS target AS
 	 *	@param sourceAcct source account
 	 *	@return target account
 	 */
-	MAccount createAccount(MAcctSchema sourceAS, MAcctSchema targetAS, MAccount sourceAcct, MAccount targetAcct)
+	public MAccount createAccount(MAcctSchema sourceAS, MAcctSchema targetAS, MAccount sourceAcct, MAccount targetAcct)
 	{
 		int Account_ID = 0;
 		int C_SubAcct_ID = 0;

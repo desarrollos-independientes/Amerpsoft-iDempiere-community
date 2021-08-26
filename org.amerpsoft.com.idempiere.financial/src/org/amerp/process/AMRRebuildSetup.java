@@ -1,5 +1,5 @@
 package org.amerp.process;
-import java.math.BigDecimal;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.UUID;
-import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
 import org.compiere.model.MAccount;
@@ -16,23 +14,16 @@ import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaDefault;
 import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MAcctSchemaGL;
-import org.compiere.model.MClient;
-import org.compiere.model.MCost;
 import org.compiere.model.MElement;
-import org.compiere.model.MElementValue;
-import org.compiere.model.MOrg;
 import org.compiere.model.Query;
 import org.compiere.model.X_C_AcctSchema_Default;
-import org.compiere.model.X_C_AcctSchema_Element;
 import org.compiere.model.X_C_AcctSchema_GL;
 import org.compiere.util.AdempiereSystemError;
-import org.compiere.util.AdempiereUserError;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
-import org.compiere.util.Trx;
 
 import dev.itechsolutions.model.MITSAcctSchemaElement;
 
@@ -42,29 +33,12 @@ import dev.itechsolutions.model.MITSAcctSchemaElement;
  *
  */
 public class AMRRebuildSetup {
-	/**
-	 *  Constructor
-	 *  @param ctx context
-	 *  @param WindowNo window
-	 */
-	public AMRRebuildSetup(Properties ctx, int WindowNo)
-	{
-		m_ctx = new Properties(ctx);	//	copy
-		m_lang = Env.getAD_Language(m_ctx);
-	}   //  MSetup
 
 	/**	Logger			*/
 	protected static CLogger	log = CLogger.getCLogger(AMRRebuildSetup.class);
 	//
-	private static Trx		m_trx = Trx.get(Trx.createTrxName("Setup"), true);
-	private Properties      m_ctx;
-	private static String          m_lang;
+	//private static Trx		m_trx = Trx.get(Trx.createTrxName("Setup"), true);
 	private static StringBuffer    m_info = new StringBuffer();;
-	//
-	private static MClient			m_client;
-	private static MOrg			m_org;
-	//
-	private int     		AD_User_ID;
 	//
 
 	/**
@@ -93,9 +67,9 @@ public class AMRRebuildSetup {
 		if (target.get_ID() == 0)
 			throw new AdempiereSystemError("NotFound Target C_AcctSchema_ID=" + p_TargetAcctSchema_ID);
 		// List Target elements 
-//log.setLevel(Level.WARNING);	
-//log.warning("p_SourceAcctSchema_ID"+p_SourceAcctSchema_ID+" p_TargetAcctSchema_ID"+p_TargetAcctSchema_ID);
-		MAcctSchemaElement[] targetElements = target.getAcctSchemaElements();
+		//log.setLevel(Level.WARNING);	
+		//log.warning("p_SourceAcctSchema_ID"+p_SourceAcctSchema_ID+" p_TargetAcctSchema_ID"+p_TargetAcctSchema_ID);
+		//MAcctSchemaElement[] targetElements = target.getAcctSchemaElements();
 		// Create Target AC C_AcctSchema_Element
 		copyAccSchemaElements(AD_Client_ID, source, target, trxName);
 		//  
@@ -118,27 +92,6 @@ public class AMRRebuildSetup {
 	{
 		return m_info.toString();
 	}
-
-	/**
-	 * 	Rollback Internal Transaction
-	 */
-	public void rollback() {
-		try {
-			m_trx.rollback();
-			m_trx.close();
-		} catch (Exception e) {}
-	}
-
-	/**
-	 * Return the main transaction of the current process.
-	 * @return the transaction name
-	 */
-	public static String get_TrxName()
-	{
-		if (m_trx != null)
-			return m_trx.getTrxName();
-		return null;
-	}	//	get_TrxN
 	
 	/**
 	 * @author Argenis Rodríguez
@@ -532,13 +485,13 @@ public class AMRRebuildSetup {
 			int sourceC_ValidCombination_ID = pp.getKey();
 			String columnName = pp.getName();
 			MAccount sourceAccount = new MAccount(Env.getCtx(), sourceC_ValidCombination_ID, trxName);
-//			MAccount targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
+			//MAccount targetAccount = createAccount(sourceAS, targetAS, sourceAccount);
 			AMRRebuildValidCombinations rvc = new AMRRebuildValidCombinations();
 			rvc.setTrxName(trxName);
 			// CREATE C_ValidCombination records
 			MAccount targetAccount = rvc.getFirstVCcombination(Env.getCtx(), sourceAS.getAD_Client_ID()
 					, targetAS.getC_AcctSchema_ID(), sourceAccount.getAccount_ID(), sourceAccount.getCombination());
-//log.warning("sourceAccount="+sourceAccount+ "  targetAccount="+targetAccount);
+			//log.warning("sourceAccount="+sourceAccount+ "  targetAccount="+targetAccount);
 			if (targetAccount== null) {
 				// CREATE New Valid Combination for the New Account Schema
 				targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
@@ -548,8 +501,8 @@ public class AMRRebuildSetup {
 				// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 				targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
 			}
-			target.setValue(columnName, new Integer(targetAccount.getC_ValidCombination_ID()));
-//log.warning("columnName="+columnName);
+			target.setValue(columnName, Integer.valueOf(targetAccount.getC_ValidCombination_ID()));
+			//log.warning("columnName="+columnName);
 		}
 		targetSave = target.save();
 		//
@@ -600,7 +553,7 @@ public class AMRRebuildSetup {
 				// log.warning("vctarget (not Null) Account_ID="+vctarget.getAccount_ID());
 				targetAccount = rvc.createAccount(sourceAS, targetAS, sourceAccount, targetAccount);
 			}
-			target.setValue(columnName, new Integer(targetAccount.getC_ValidCombination_ID()));
+			target.setValue(columnName, Integer.valueOf(targetAccount.getC_ValidCombination_ID()));
 		}
 		if (!target.save())
 			throw new AdempiereSystemError("Could not Save Default");
@@ -853,18 +806,6 @@ public class AMRRebuildSetup {
 			masel = new MAcctSchemaElement(Env.getCtx(),C_AcctSchema_Element_ID,null);
 		return masel;		
 	}
-	
-	/**************************************************************************
-	 * 	Get Next ID
-	 * 	@param AD_Client_ID client
-	 * 	@param TableName table name
-	 * 	@return id
-	 */
-	private static int getNextID (int AD_Client_ID, String TableName)
-	{
-		//	TODO: Exception 
-		return DB.getNextID (AD_Client_ID, TableName, m_trx.getTrxName());
-	}	//	getNextID
 	
 }
 
