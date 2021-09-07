@@ -975,7 +975,7 @@ public class AMRRebuildMaterial {
 				.append(ColumnUtils.COLUMNNAME_M_Product_ID).append(" = ?")
 				.append(" AND ")
 				.append(ColumnUtils.COLUMNNAME_IsSOTrx).append(" = 'N'")
-			.append(" ORDER BY ").append(ColumnUtils.COLUMNNAME_AD_Table_ID);
+			.append(" ORDER BY ").append(ColumnUtils.COLUMNNAME_DateDoc).append(" DESC");
 		
 		Timestamp retVal = DB.getSQLValueTS(trxName, sql.toString()
 				, MInOut.Table_ID, MProduction.Table_ID, AD_Org_ID, M_Product_ID);
