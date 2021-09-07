@@ -32,6 +32,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MInOut;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
+import org.compiere.model.MProduction;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
 import org.compiere.model.X_M_Product_Acct;
@@ -967,16 +968,17 @@ public class AMRRebuildMaterial {
 					.append(ColumnUtils.COLUMNNAME_DateDoc)
 				.append(" FROM " + ColumnUtils.Table_Name_FTU_LastProductsDocuments)
 				.append(" WHERE ")
-				.append(ColumnUtils.COLUMNNAME_AD_Table_ID).append(" = ?")
+				.append(ColumnUtils.COLUMNNAME_AD_Table_ID).append(" IN (?, ?)")
 				.append(" AND ")
 				.append(ColumnUtils.COLUMNNAME_AD_Org_ID).append(" = ?")
 				.append(" AND ")
 				.append(ColumnUtils.COLUMNNAME_M_Product_ID).append(" = ?")
 				.append(" AND ")
-				.append(ColumnUtils.COLUMNNAME_IsSOTrx).append(" = 'N'");
+				.append(ColumnUtils.COLUMNNAME_IsSOTrx).append(" = 'N'")
+			.append(" ORDER BY ").append(ColumnUtils.COLUMNNAME_AD_Table_ID);
 		
 		Timestamp retVal = DB.getSQLValueTS(trxName, sql.toString()
-				, MInOut.Table_ID, AD_Org_ID, M_Product_ID);
+				, MInOut.Table_ID, MProduction.Table_ID, AD_Org_ID, M_Product_ID);
 		
 		return retVal;
 	}
