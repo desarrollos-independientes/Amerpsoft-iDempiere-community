@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.compiere.model.*;
-import org.amerp.amxeditor.model.MRegionExt;
 
 //import org.compiere.model.*;
 import org.compiere.util.*;
@@ -30,7 +29,7 @@ import org.compiere.util.*;
  * @author luisamesty
  *
  */
-public class MCountryExt extends X_C_Country implements Comparator<Object>, Serializable {
+public class MCountryExt extends MCountry implements Comparator<Object>, Serializable {
 
 	/**
 	 * 

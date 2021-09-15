@@ -20,8 +20,6 @@ import org.compiere.process.DocAction;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
-import org.amerp.amxeditor.model.MCountryExt;
-import org.amerp.amxeditor.model.MRegionExt;
 
 /**
  *	Location (Address)
